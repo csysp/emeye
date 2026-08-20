@@ -31,7 +31,7 @@ release landscape — every other feature is replaceable, the history is not.
 - [ ] REQ-07 — Titles decomposed into title / mix name / mix kind / remixers / features
 - [ ] REQ-08 — Keys canonicalized to (tonic, mode) with Camelot derived on read
 - [ ] REQ-09 — BPM stored as reported plus genre-aware canonical fold
-- [ ] REQ-10 — Genre taxonomy versioned with a crosswalk to a stable internal taxonomy
+- [ ] REQ-10 — Genre captured as a track attribute; versioned crosswalk deferred (charts-only scope)
 - [ ] REQ-11 — Analytics marts for tempo, key, title tokens, label share, artist activity
 - [ ] REQ-12 — Chart-derived and catalog-derived series are distinguishable everywhere
 - [ ] REQ-13 — Forecasting with rolling-origin backtesting and mandatory baselines
@@ -44,6 +44,8 @@ release landscape — every other feature is replaceable, the history is not.
 - [ ] REQ-20 — `emeye backup` produces a restorable warehouse dump
 - [ ] REQ-30 — Repository carries a strong protective (copyleft) license, applied consistently
 - [ ] REQ-31 — Runtime dependencies are license-compatible with that choice, checked in CI
+- [ ] REQ-32 — Spotify supplies chart/playlist membership and metadata via the official API
+- [ ] REQ-33 — BPM is resolved through an ordered fallback ladder with the winning source recorded
 
 ### Out of Scope
 
@@ -54,6 +56,9 @@ release landscape — every other feature is replaceable, the history is not.
 - Anti-bot evasion (CAPTCHA solving, proxy rotation, fingerprint spoofing) — line we don't cross
 - 1001Tracklists collection — no sanctioned route; explicit anti-automation terms
 - Spotify audio-features-based tempo/key analysis — deprecated for new apps (Nov 2024)
+- Pursuing sanctioned Beatport API/partner access — owner's call: minimal public-page collection instead
+- Per-genre Beatport chart coverage in v1 — scope is the overall Top 100 and Hype 100
+- Versioned genre taxonomy + crosswalk in v1 — charts-only scope makes it unnecessary machinery
 - Audio playback / DJ tooling / library management — different product
 - Mobile or native clients — browser on localhost is enough
 
@@ -95,22 +100,33 @@ release landscape — every other feature is replaceable, the history is not.
 | Derived fields (Camelot, tokens, BPM buckets) computed downstream, not stored in silver | Definitions will change; a rebuild is cheaper than a migration | — Pending |
 | Typer CLI + cron container instead of Dagster/Prefect | Job graph is shallow; an orchestrator would be more machinery than the problem needs | — Pending |
 | Charts ingestion ships before analytics | Chart snapshots are irrecoverable; analytics can be built against data already collected | — Pending |
-| Beatport collector behind an explicit opt-in flag | ToS prohibits automated collection; the owner should make that choice consciously | — Pending |
-| Spotify excluded as a tempo/key source | `audio-features` deprecated for new apps Nov 2024; building on it would strand the analytics | — Pending |
-| Strong protective (copyleft) license, AGPL-3.0-or-later recommended | The Streamlit surface makes this network-deployable, so a plain GPL leaves the SaaS loophole open; AGPL also keeps Essentia (AGPL-3.0) usable for the deferred audio ground-truth work | — Pending (decided in plan 01-04) |
+| Beatport collector behind an explicit opt-in flag | ToS prohibits automated collection; the owner should make that choice consciously | ✓ Owner-confirmed |
+| No sanctioned Beatport API access pursued | Partner API is gated and unnecessary for chart-scale volume; minimal public-page collection is sufficient | ✓ Owner-confirmed |
+| Beatport scraped on chart-reset cadence only, not continuously | One fetch per chart per reset, plus detail fetches only for track IDs not already in the warehouse. Volume stays a trickle and falls further as the catalogue fills | ✓ Owner-confirmed |
+| Beatport is the primary BPM source but not the source of truth | BPM originates at Beatport, then gets cross-checked against Deezer/MusicBrainz/Discogs; disagreement is data, not an error to suppress | ✓ Owner-confirmed |
+| Chart scope is Beatport Top 100 + Hype 100 + selected Spotify dance playlists | A narrow, deep, unbroken series beats broad shallow coverage — and keeps collection volume minimal | ✓ Owner-confirmed |
+| Genre taxonomy work deferred | With charts-only scope, genre is a per-track attribute rather than a modelling backbone; SCD2 + crosswalk is machinery the v1 questions do not need | ✓ Owner-confirmed |
+| Spotify excluded as a tempo/key source, included as a metadata/chart source | `audio-features` deprecated for new apps Nov 2024, so tempo never comes from Spotify — but playlist membership, ISRC, release metadata and popularity are still valuable | ✓ Owner-confirmed |
+| Spotify dance playlists/charts tracked as a second chart signal | Beatport charts what the DJ-purchase market buys; Spotify charts what the streaming audience plays. Two different populations, both worth a snapshot | ✓ Owner-confirmed |
+| **AGPL-3.0-or-later** | Chosen by the owner. The Streamlit surface makes this network-deployable, so a plain GPL would leave the hosted-service loophole open; AGPL closes it, keeps Essentia (AGPL-3.0) available for the deferred audio ground-truth work, and stays compatible with the MIT/BSD/Apache-2.0 stack | ✓ Decided 2026-08-20 |
 | Store keys as (tonic_pc, mode), render Camelot on read | Enharmonic spellings otherwise split one key into phantom duplicates | — Pending |
-| Genre modelled as SCD2 + canonical crosswalk | Vendor taxonomy renames otherwise fabricate false trend breaks | — Pending |
+| Genre modelled as SCD2 + canonical crosswalk | ~~Vendor taxonomy renames otherwise fabricate false trend breaks~~ Superseded: charts-only scope removes the need; genre stays a plain attribute | ✗ Dropped for v1 |
 
 ## Open Questions
 
-1. Genre scope for v1 — all Beatport genres, or a focused subset?
-2. Is there a personal library / DJ history to fold in as ground truth?
-3. Discogs / Last.fm accounts available for API tokens?
-4. Bronze retention — keep forever, or compress and prune after N months?
-5. Backup target for the Postgres volume?
-6. Does the owner have (or want to pursue) sanctioned Beatport API access?
-7. License: AGPL-3.0-or-later (recommended), GPL-3.0-or-later, or a
-   source-available non-commercial licence? Decided at the 01-04 checkpoint.
+Resolved 2026-08-20: genre scope (charts-only, taxonomy deferred), Beatport API
+access (none — minimal scraping), license (AGPL-3.0-or-later), Spotify's role
+(metadata + playlist charts, never tempo).
+
+1. **Spotify app credentials** — is there a Spotify account available to register
+   a developer app for client-credentials access?
+2. **Which Spotify playlists exactly** — `mint` is named; which others? And see
+   the editorial-playlist access risk in `docs/DATA-SOURCES.md` before committing.
+3. **Personal library / DJ history** — is there a local collection or play history
+   to fold in as BPM/key ground truth?
+4. **Discogs / Last.fm tokens** — accounts available?
+5. **Bronze retention** — keep payloads forever, or compress and prune after N months?
+6. **Backup target** — external disk, or none?
 
 ---
-*Last updated: 2026-08-20 after project initialization*
+*Last updated: 2026-08-20 — owner decisions on license, Beatport posture, Spotify role and chart scope*

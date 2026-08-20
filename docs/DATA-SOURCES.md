@@ -15,12 +15,21 @@ Status legend: 🟢 planned core · 🟡 optional / later · 🔴 out of scope f
 source that reliably carries BPM **and** musical key **and** a genre taxonomy
 built for DJs, on essentially the whole commercial release landscape.
 
+**Not the source of truth.** Beatport is the *primary* origin for BPM and key —
+most tempo values will enter the warehouse from here — but its values are
+vendor-supplied and algorithmically derived, and they are cross-checked against
+Deezer, MusicBrainz and Discogs rather than trusted outright. Where sources
+disagree, the disagreement is retained and reported (see REQ-33 and the BPM
+resolution ladder below). Suppressing a conflict to produce one tidy number
+destroys the only signal we have about data quality.
+
 **Access reality**
 
 - Beatport operates a `v4` REST API (`api.beatport.com/v4/`) that is
-  **partner-gated** — there is no open self-serve developer signup. If the owner
-  can obtain sanctioned API credentials, that is the preferred path and this
-  section should be rewritten around it.
+  **partner-gated** — there is no open self-serve developer signup.
+  **Decision (owner, 2026-08-20): sanctioned/partner access is not pursued.**
+  At chart-only volume the API would buy nothing that a handful of daily page
+  fetches does not, and the application overhead is not worth it.
 - Absent credentials, the practical route is the public website's own embedded
   data payloads (the Next.js app ships structured JSON alongside each page).
   This is still scraping. Treat it as such.
@@ -45,16 +54,40 @@ built for DJs, on essentially the whole commercial release landscape.
 | `exclusive`, `preorder` | Explains chart timing anomalies |
 | chart position, chart date, chart genre | Time-series fact, daily grain |
 
-**Chart surfaces worth snapshotting daily**
+**Chart surfaces in scope (v1)**
 
-- Top 100 overall and Top 100 per genre
-- "Hype" charts (paid-promotion-free surface — different bias profile)
-- New-releases ordering per genre
-- Beatport DJ charts (curated by artists — a distinct taste signal)
+Scope is deliberately narrow — a narrow unbroken series is worth more than broad
+shallow coverage, and it keeps request volume near zero:
+
+- **Top 100 overall** — the headline sales chart
+- **Hype 100** — the paid-promotion-free surface, a different bias profile
+
+Explicitly **not** in v1 scope: per-genre Top 100s, new-release ordering,
+Beatport DJ charts. Each is a separate ongoing request stream, and none is
+needed for the v1 questions. They can be added later — but note that adding them
+later means their history starts later.
+
+**Collection cadence — minimal by design**
+
+The job runs **on chart reset, once per chart**, not on a fixed polling loop:
+
+1. Establish the reset cadence empirically in plan `03-01` (observed content
+   change, plus any `Last-Modified`/`ETag` the origin offers). Do not assume;
+   measure, then record the finding here.
+2. Fetch each in-scope chart exactly **once per reset window**. A re-run inside
+   the same window must serve from bronze and issue **zero** requests.
+3. Fetch track detail **only for track IDs not already in the warehouse**. Chart
+   turnover is modest, so this cost falls steadily as the catalogue fills — the
+   steady state is a few detail fetches per day, not a hundred.
+
+Steady-state volume is on the order of **2 chart requests plus a handful of
+detail requests per day**. If a design implies materially more than that, the
+design is wrong.
 
 **Rules**
 
-- Daily snapshot job, off-peak, ≤1 req/s, jittered, with `Retry-After` respected.
+- ≤1 req/s, jittered, off-peak, `Retry-After` respected absolutely.
+- Honor `robots.txt` on every run, every host.
 - Cache in bronze; never re-fetch a document we already hold unchanged.
 - Behind an explicit opt-in config flag. Terms of Service on beatport.com
   prohibit automated collection; the owner is the one who decides to enable it,
@@ -130,17 +163,67 @@ modelling — "X remixed Y", "A is an alias of B", "recording ↔ ISRC".
 
 ---
 
-## 🟡 Spotify — metadata only, with a warning
+## 🟢 Spotify — metadata + streaming-side charts (never tempo)
+
+**Role (owner, 2026-08-20):** an official-API source for **playlist/chart
+membership and track metadata**. It is a second, independent chart *population*:
+Beatport charts what the DJ-purchase market buys, Spotify charts what the
+streaming audience plays. Both are worth snapshotting; they must never be
+blended into one series without labelling.
 
 ⚠️ **Do not design tempo or key analytics around Spotify.** The
-`/audio-features` and `/audio-analysis` endpoints (the source of the
-tempo/key/energy/danceability numbers everyone used to build on) were
+`/audio-features` and `/audio-analysis` endpoints — the source of the
+tempo/key/energy/danceability numbers everyone used to build on — were
 **deprecated for new applications in November 2024**. Assume they are
-unavailable to this project.
+unavailable to this project. BPM comes from Beatport and Deezer; see the BPM
+resolution ladder below.
 
-What remains useful: release metadata, ISRC via the track object, artist
-`popularity` and follower counts as a mainstream-reach proxy, playlist presence.
-Requires OAuth client credentials.
+**Access:** OAuth **client-credentials** flow (no user login needed for public
+catalog and public playlist reads). Requires registering a developer app.
+
+**Useful fields**
+
+| Field | Notes |
+|---|---|
+| `id`, `uri` | Spotify identifier — `xref_external_id` anchor |
+| `external_ids.isrc` | The best cross-service join hint we get from Spotify |
+| `name`, `artists[]`, `album` | Metadata cross-check; mix names appear in `name` |
+| `duration_ms` | Independent length check |
+| `popularity` (track + artist) | Mainstream-reach proxy over time — snapshot it, it mutates |
+| `album.release_date` (+ precision) | Note the precision field; it is often year-only |
+| playlist membership + position | The chart fact, dated grain |
+
+**Playlists to track**
+
+`mint` is named by the owner. The rest of the list is an open question — see
+`.planning/PROJECT.md`. Candidates: Spotify's dance/electronic editorial
+playlists, plus any that behave like charts rather than mood collections.
+
+⚠️ **Verify before building on this.** The same November 2024 change that
+removed audio-features also **restricted access to Spotify-owned editorial
+playlists** (Featured Playlists, category playlists, and the playlist endpoints
+for Spotify-owned editorial content) for newly-registered applications. `mint`
+is a Spotify-owned editorial playlist and may therefore be unreachable by a new
+app. **This must be confirmed against a real app registration in plan `04-04`
+before any playlist-tracking design is committed** — the answer determines
+whether this source works as described.
+
+Fallbacks if editorial playlists are confirmed unavailable:
+- Track user-owned or third-party public playlists that mirror the same territory
+- Use the separate Spotify Charts product (regional/genre top-streamed lists) if
+  its terms permit personal collection — verify independently
+- Accept Beatport as the sole chart signal and use Spotify for metadata only
+
+Record whichever answer is found here, in this file, immediately. That finding
+is expensive to rediscover.
+
+**Rules**
+
+- Never read, store, or derive from a Spotify tempo/key field, even if an
+  endpoint appears to still serve one. A CI grep enforces this (REQ-32).
+- Popularity and playlist membership are **mutable** — snapshot them as dated
+  facts, never update in place.
+- Respect the documented rate limits and back off on `429`.
 
 ## 🟡 Traxsource / Juno Download
 
@@ -178,6 +261,35 @@ Bandcamp has no public API (the sales feed is undocumented and unstable);
 SoundCloud's API registration has been effectively closed for years. Both are
 relevant to underground release trends but neither offers a dependable,
 sanctioned route today.
+
+---
+
+## BPM resolution ladder (REQ-33)
+
+Not every track arrives with a usable tempo — Spotify-charting tracks in
+particular may have no BPM anywhere in our data. BPM is resolved through an
+**ordered ladder**, and the winning source is recorded on the row alongside the
+value. Every source that had an opinion is retained, so disagreement stays
+visible.
+
+| Rank | Source | Notes |
+|---|---|---|
+| 1 | **Beatport** | Primary origin. Vendor-reported, algorithmic, DJ-oriented |
+| 2 | **Deezer** | Free, unauthenticated `bpm` on the track object — the main independent check |
+| 3 | **AcousticBrainz dump** | Collection stopped in 2022, but the historical dump is still downloadable and MBID-keyed. Static lookup, zero request cost. Verify current availability before relying on it |
+| 4 | **MusicBrainz / Discogs** | Sparse for tempo; useful mainly via linked data |
+| 5 | **Local audio analysis** (Essentia/librosa) | Only true ground truth. Owner's own files only. Deferred |
+
+Rules:
+
+- Record `bpm_source` and `bpm_confidence` on every resolved value. A tempo with
+  no provenance is not usable in a trend series.
+- **Never average across sources.** BPM is ambiguous by a factor of two — a
+  174 BPM D&B track and an 87 BPM reading of the same track average to a number
+  that describes nothing. Pick a winner by ladder rank, fold to the canonical
+  band, and keep the alternatives.
+- A disagreement beyond the half/double-time relationship is a **quality signal
+  worth surfacing**, not noise to smooth away.
 
 ---
 

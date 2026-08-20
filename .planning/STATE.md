@@ -4,7 +4,7 @@ status: executing
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 29
+  total_plans: 30
   completed_plans: 0
   percent: 0
 ---
@@ -22,16 +22,19 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 
 Phase: 1 of 8 (Foundation)
 Plan: 0 of 4 in current phase
-Status: Ready to execute
-Last activity: 2026-08-20 — Phase 1 planned. `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
+Status: Planned — HOLDING for owner review of the six open questions
+Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 1:**
 - Wave 1 (parallel): `01-01` Python project skeleton · `01-04` Licensing & governance ⛔ blocking checkpoint
 - Wave 2: `01-02` Container stack, Postgres, Alembic
 - Wave 3: `01-03` Quality gates and CI
 
-`01-04` is the only non-autonomous plan in the phase — it stops for the license
-decision. Everything else runs unattended.
+The license checkpoint in `01-04` is **resolved** — AGPL-3.0-or-later. All four
+plans are now autonomous.
+
+⛔ **Execution is on hold at the owner's instruction** until the six open
+questions in `PROJECT.md` have been reviewed. Do not start wave 1 before then.
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -61,7 +64,12 @@ affecting current work:
 - [Init]: Beatport collector gated behind explicit opt-in; ToS prohibits automated collection
 - [Init]: Spotify excluded as tempo/key source — audio-features deprecated for new apps
 - [Init]: Typer CLI + cron container instead of an orchestrator; job graph is shallow
-- [Phase 1 planning]: Licensing promoted to a first-class Phase 1 deliverable (01-04) with a blocking checkpoint — recommendation AGPL-3.0-or-later
+- [Owner, 2026-08-20]: **AGPL-3.0-or-later** — obligations are well-understood, unlike a bespoke source-available license
+- [Owner, 2026-08-20]: No sanctioned Beatport API; minimal scraping on chart reset, detail fetches only for unseen track IDs
+- [Owner, 2026-08-20]: Chart scope = Beatport Top 100 + Hype 100 + selected Spotify dance playlists; no per-genre sweep
+- [Owner, 2026-08-20]: Beatport is the primary BPM origin but not the source of truth — cross-referenced, disagreement retained
+- [Owner, 2026-08-20]: Spotify is a metadata + playlist-chart source via the official API; never tempo or key
+- [Owner, 2026-08-20]: Genre taxonomy work dropped for v1 — charts-only scope makes the crosswalk unnecessary
 - [Phase 1 planning]: Source enable flags default to False, so merging a collector never starts collection
 - [Phase 1 planning]: Tests run with outbound networking blocked at the socket layer, not by convention
 
@@ -78,12 +86,15 @@ None yet.
 - **Time-to-value is long by nature.** Meaningful trend and forecast output needs
   12–24 months of self-collected chart history. Catalog backfill via release
   dates partially offsets this; expectations should be set accordingly.
-- **License decision is pending and blocking.** Plan 01-04 stops at a checkpoint
-  until the license is chosen. `01-01` deliberately leaves `pyproject.toml`
-  license metadata empty so nothing has to be walked back — but `01-03` depends
-  on `01-04`, so an unanswered checkpoint stalls wave 3.
-- **Open questions in PROJECT.md** (genre scope, tokens, retention, backup
-  target) should be resolved during the Phase 1 Discuss step.
+- **Collection is a slow burn.** The dataset needs 6–12 months of accumulation
+  before it answers anything interesting. Nothing downstream should be optimized
+  for speed of first result; the job is to start collecting and keep collecting.
+- **Spotify editorial-playlist access is an unverified assumption.** The Nov 2024
+  API changes restricted Spotify-owned editorial playlists (`mint` among them)
+  for new apps. Plan `04-04` must verify against a real app registration before
+  any playlist design is committed. Fallbacks are documented in DATA-SOURCES.md.
+- **Six open questions remain** in PROJECT.md (Spotify credentials, playlist
+  list, personal library, Discogs/Last.fm tokens, bronze retention, backup).
 
 ## Deferred Items
 
@@ -99,5 +110,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-08-20 — Phase 1 planning complete.
-Next step: Execute Phase 1 wave 1 (`01-01` and `01-04` in parallel). `01-04`
-will stop at the license checkpoint and needs an answer to proceed.
+Next step: **Owner reviews the six open questions in PROJECT.md.** On their word,
+execute Phase 1 wave 1 (`01-01` and `01-04` in parallel) — both now autonomous.

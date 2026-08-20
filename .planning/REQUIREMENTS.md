@@ -17,7 +17,7 @@ being renumbered or deleted.
 | REQ-07 | Titles decompose into title, mix_name, mix_kind, remixers, featured artists | 5 | Fixture corpus of real-world oddities parses correctly; unparsed cases are flagged, never silently dropped |
 | REQ-08 | Keys are canonical `(tonic_pc, mode)`; Camelot/Open Key derived on read | 5 | Round-trip tests both directions; enharmonic inputs collapse to one key |
 | REQ-09 | BPM stored as reported plus a genre-aware canonical fold | 5 | Both columns present; no row is ever dropped for being out of band |
-| REQ-10 | Genre taxonomy is versioned (SCD2) with a crosswalk to a stable internal taxonomy | 5 | A vendor rename produces no discontinuity in the canonical series |
+| REQ-10 | Genre is captured as a per-track attribute with the vendor string preserved verbatim | 5 | Genre is queryable per track; no crosswalk required at charts-only scope (versioned taxonomy deferred — see PROJECT.md Key Decisions) |
 | REQ-11 | Analytics marts exist for tempo, key, title tokens, label share, artist activity, remix network | 6 | Each mart builds and passes dbt tests; each reports its denominator |
 | REQ-12 | Chart-derived and catalog-derived series are distinguishable everywhere | 6 | Every mart row carries `population`; no mart blends the two |
 | REQ-13 | Forecasting uses rolling-origin backtesting with mandatory baselines | 7 | Every target has seasonal-naive + drift baselines computed in the same run |
@@ -45,6 +45,8 @@ being renumbered or deleted.
 | REQ-25 | No credentials in the repo | 1 | `.env` gitignored, `.env.example` documents every variable, secret scan in CI |
 | REQ-30 | The repository carries a strong protective (copyleft) license, applied consistently | 1 | `LICENSE` present, `pyproject.toml` metadata matches, source headers consistent, choice recorded as a Key Decision |
 | REQ-31 | Every runtime dependency is license-compatible with the chosen license | 1, and on every dependency addition | A license inventory is generated and checked in CI; an incompatible dependency fails the build |
+| REQ-32 | Spotify supplies playlist/chart membership and track metadata via the official API, never tempo or key | 4 | Dated playlist-membership facts accumulate; no analytic reads a Spotify tempo/key field |
+| REQ-33 | BPM is resolved through an ordered, recorded fallback ladder | 5 | Every track with a BPM records which source supplied it and at what confidence; the ladder is inspectable and disagreements are retained |
 
 ## Quality
 

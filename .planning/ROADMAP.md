@@ -64,45 +64,51 @@ Plans:
 - [ ] 02-03: Job runner — idempotent job contract, run tracking, `emeye status`, scheduler container
 
 ### Phase 3: Beatport Connector
-**Goal**: The irreplaceable data starts accumulating: daily chart snapshots and full catalog metadata for in-scope genres.
+**Goal**: The irreplaceable data starts accumulating — Top 100 and Hype 100 snapshots on every chart reset, plus catalog metadata for the tracks that appear on them.
 **Depends on**: Phase 2
 **Requirements**: REQ-03, REQ-04, REQ-17, REQ-23, REQ-26
+**Scope note**: Overall **Top 100** and **Hype 100** only — no per-genre chart sweep. Catalog detail is fetched only for track IDs not already in the warehouse, so request volume falls as the catalogue fills. No sanctioned/partner API is pursued.
 **Success Criteria** (what must be TRUE):
-  1. Daily chart snapshots (Top 100 overall, per-genre, Hype) land as dated facts and never mutate in place
-  2. Catalog rows carry BPM, key, genre/subgenre, label, catalog number, artists, remixers, both date fields, ISRC and length, matching the source on spot checks
-  3. Missing chart days are detected and reported rather than silently absent
-  4. Parsers fail loudly on unexpected payload shape instead of emitting nulls
-  5. The connector is disabled by default and requires a deliberate opt-in setting
+  1. Top 100 and Hype 100 snapshots land as dated facts on each chart reset and never mutate in place
+  2. One chart fetch per chart per reset — a re-run inside the same reset window serves from bronze and issues zero requests
+  3. Catalog rows carry BPM, key, genre string, label, catalog number, artists, remixers, both date fields, ISRC and length, matching the source on spot checks
+  4. Track detail is fetched only for previously unseen track IDs
+  5. Missing chart resets are detected and reported rather than silently absent
+  6. Parsers fail loudly on unexpected payload shape instead of emitting nulls
+  7. The connector is disabled by default and requires a deliberate opt-in setting
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: Access spike — determine the viable sanctioned/practical route, document it, decide scope
-- [ ] 03-02: Catalog collector — tracks, releases, labels, artists into bronze + silver upserts
-- [ ] 03-03: Chart collector — daily snapshots, chart dimension, gap detection
+- [ ] 03-01: Access spike — establish the chart reset cadence, the minimum viable request set, and robots.txt posture; document findings
+- [ ] 03-02: Chart collector — Top 100 + Hype 100 dated snapshots, chart dimension, reset-gap detection
+- [ ] 03-03: Catalog collector — track/release/label/artist detail for unseen IDs only, bronze + silver upserts
 - [ ] 03-04: Parser fixture corpus + unit tests + failure-mode handling
 
 ### Phase 4: Open-Data Enrichment
-**Goal**: Break the single-source dependency — an independent view of the same tracks, plus a real entity backbone to hang a decade of data on.
+**Goal**: Break the single-source dependency — an independent view of the same tracks, a real entity backbone, and a second chart population from streaming.
 **Depends on**: Phase 3
-**Requirements**: REQ-05, REQ-06
+**Requirements**: REQ-05, REQ-06, REQ-32
 **Success Criteria** (what must be TRUE):
-  1. MusicBrainz supplies MBIDs, aliases, ISRCs and remixer relationships for a measurable share of the catalog
-  2. Deezer supplies an independent BPM for cross-checking, and the disagreement rate is quantified
+  1. MusicBrainz supplies MBIDs, aliases, ISRCs and remixer relationships for a measurable share of the charted catalog
+  2. Deezer supplies an independent BPM for cross-checking, and the disagreement rate against Beatport is quantified
   3. Discogs label hierarchy, credits and styles are loaded from data dumps rather than API crawling
-  4. Popularity snapshots (Last.fm/ListenBrainz) accumulate on a schedule so deltas are derivable
-  5. Every cross-source link records confidence and method, and re-resolution never downgrades a link
-**Plans**: 4 plans
+  4. Spotify playlist membership is captured as dated facts for the tracked dance playlists, via the official API
+  5. No Spotify tempo or key field is read anywhere in the codebase
+  6. Popularity snapshots (Last.fm/ListenBrainz) accumulate on a schedule so deltas are derivable
+  7. Every cross-source link records confidence and method, and re-resolution never downgrades a link
+**Plans**: 5 plans
 
 Plans:
 - [ ] 04-01: MusicBrainz client + relationship/alias/ISRC ingest (1 req/s, dump path for bulk)
 - [ ] 04-02: Deezer + Last.fm/ListenBrainz collectors, scheduled popularity snapshots
 - [ ] 04-03: Discogs data-dump loader — labels, credits, styles
-- [ ] 04-04: Entity resolution — ISRC → MBID → fuzzy composite, `xref_external_id`, review queue
+- [ ] 04-04: Spotify connector — client-credentials auth, playlist membership snapshots, ISRC/metadata capture
+- [ ] 04-05: Entity resolution — ISRC → MBID → fuzzy composite, `xref_external_id`, review queue
 
 ### Phase 5: Domain Normalization
 **Goal**: Turn messy vendor strings into analyzable structure — the phase that decides whether every later number is real or an artifact.
 **Depends on**: Phase 4
-**Requirements**: REQ-07, REQ-08, REQ-09, REQ-10, REQ-26
+**Requirements**: REQ-07, REQ-08, REQ-09, REQ-10, REQ-26, REQ-33
 **Success Criteria** (what must be TRUE):
   1. Titles decompose into title, mix name, mix kind, remixers and featured artists, with unparsed cases flagged rather than dropped
   2. Enharmonic key spellings collapse to one canonical key and Camelot round-trips both ways
@@ -179,7 +185,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation | 0/4 | Not started | - |
 | 2. Ingestion Framework | 0/3 | Not started | - |
 | 3. Beatport Connector | 0/4 | Not started | - |
-| 4. Open-Data Enrichment | 0/4 | Not started | - |
+| 4. Open-Data Enrichment | 0/5 | Not started | - |
 | 5. Domain Normalization | 0/4 | Not started | - |
 | 6. Trend Analytics | 0/4 | Not started | - |
 | 7. Forecasting | 0/3 | Not started | - |

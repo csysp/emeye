@@ -188,11 +188,11 @@ Full detail in `docs/DOMAIN.md`. The load-bearing ones:
   into `title`, `mix_name`, `remixer[]`, and a `mix_kind` enum
   (`original`, `extended`, `radio_edit`, `remix`, `rework`, `vip`, `dub`,
   `edit`, `live`, `instrumental`, `bootleg`, `tool`). Parse once, in `domain/`.
-- **Genre taxonomies drift.** Beatport has repeatedly renamed and split genres
-  (e.g. Techno split into Peak Time/Driving and Raw/Deep/Hypnotic; Afro House,
-  Organic House, Amapiano added). Model genres as a versioned dimension with a
-  crosswalk to a stable internal taxonomy, otherwise every long-run series
-  breaks at the rename date.
+- **Genre taxonomies drift**, but v1 does not model that. Scope is the overall
+  Top 100 and Hype 100, not per-genre charts, so genre is a **plain per-track
+  attribute with the vendor string preserved verbatim** — no versioned dimension,
+  no crosswalk. Keep the raw string faithfully so the crosswalk remains possible
+  if per-genre scope is ever added; just don't build the machinery now.
 - **Artist strings are not artists.** `A & B`, `A feat. B`, `A vs B`,
   `A presents B` and alias/live-name splits all need parsing plus an alias table.
   Link to MusicBrainz MBIDs where possible; never treat the display string as an ID.
@@ -201,6 +201,14 @@ Full detail in `docs/DOMAIN.md`. The load-bearing ones:
 - **Re-releases, remasters and compilations inflate counts.** Deduplicate on
   (normalized title, mix name, artist set, duration bucket) before counting
   "releases", and keep the raw count available for comparison.
+- **BPM has a resolution ladder, not a single source.** Beatport first, Deezer
+  second, then AcousticBrainz dump / linked data, then local audio analysis.
+  Record `bpm_source` and `bpm_confidence` on every value. Never average across
+  sources — half/double-time ambiguity makes the average meaningless. See
+  `docs/DATA-SOURCES.md`.
+- **Spotify is metadata and playlist charts only — never tempo or key.** The
+  `audio-features` / `audio-analysis` endpoints are deprecated for new apps.
+  Reading a Spotify tempo field is a defect, and CI greps for it.
 - **Release date ≠ availability date.** Beatport exclusives commonly precede
   wide release by 2–4 weeks. Track both when both exist and pick one grain
   explicitly per metric.
@@ -213,13 +221,13 @@ Detail, field lists, and limits live in `docs/DATA-SOURCES.md`. Summary:
 
 | Source | Access | Gives us | Posture |
 |---|---|---|---|
-| **Beatport** | No open public API; v4 API is partner-gated. Web payloads are the practical route | BPM, key, genre/subgenre, label, catalog no., remixer credits, release date, **charts** | Primary. Handle with maximum care — see legal posture below |
+| **Beatport** | No open public API; v4 API is partner-gated and **not pursued**. Web payloads are the practical route | BPM, key, genre string, label, catalog no., remixer credits, release date, **Top 100 + Hype 100** | Primary BPM origin, not source of truth. Minimal collection: one fetch per chart per reset; detail only for unseen track IDs |
 | **MusicBrainz** | Open API + full DB dumps | Canonical artists/releases, MBIDs, ISRCs, **remixer relationships**, aliases | Backbone for entity resolution. 1 req/s, descriptive User-Agent required |
 | **Discogs** | Free API (token) + monthly data dumps | Labels, catalog numbers, styles, credits, historical/vinyl depth | Best label and credit coverage. Prefer the dumps for bulk |
 | **Deezer** | Public API, no auth for most reads | **BPM**, duration, ISRC, release date, artist/album links | Free, unauthenticated tempo cross-check |
 | **Last.fm** | Free API key | Tags, playcounts, listeners | Popularity proxy over time; tags are folksonomy, treat as noisy |
 | **ListenBrainz** | Open API + data dumps | Real listening counts, MBID-keyed | Clean, open alternative to Last.fm |
-| **Spotify** | OAuth | Popularity, release metadata | ⚠️ `audio-features` / `audio-analysis` were **deprecated for new apps in Nov 2024** — do **not** design tempo/key analytics around Spotify |
+| **Spotify** | OAuth client credentials | Playlist/chart membership (`mint` + other dance charts), ISRC, popularity, release metadata | Second chart population (streaming vs DJ-purchase). ⚠️ `audio-features`/`audio-analysis` **deprecated for new apps Nov 2024** — never take tempo or key from Spotify. Editorial-playlist access is also restricted for new apps; verify in `04-04` |
 | **Traxsource / Juno** | HTML | House/techno coverage Beatport under-represents | Optional, later phase |
 | **1001Tracklists** | No API, aggressive anti-bot | What DJs actually play | Out of scope for now; revisit only if a sanctioned route appears |
 | **Local audio (Essentia/librosa)** | Owner's own files | Ground-truth BPM/key for validation | Optional; the only way to audit vendor key accuracy |
@@ -366,23 +374,20 @@ files directly and follow them by hand.
 
 ## Licensing
 
-emeye is licensed under a **strong protective (copyleft) license**, chosen at a
-blocking checkpoint in plan `01-04` rather than defaulted. Until that plan runs,
-`pyproject.toml` deliberately carries **no** license metadata — a placeholder
-that later disagrees with the decision is worse than a gap.
+emeye is licensed **AGPL-3.0-or-later** (decided by the owner, 2026-08-20).
+The Streamlit surface makes this network-deployable, so a plain GPL would leave
+the hosted-service loophole open; AGPL closes it, keeps Essentia (AGPL-3.0)
+usable for the deferred audio ground-truth work, and its obligations are
+well-understood rather than bespoke.
 
-Recommendation on the table: **AGPL-3.0-or-later**. The Streamlit surface makes
-this network-deployable, so a plain GPL would leave the hosted-service loophole
-open; AGPL closes it, and it keeps Essentia (AGPL-3.0) usable for the deferred
-audio ground-truth work.
+`pyproject.toml` carries no license metadata until plan `01-04` applies it —
+that plan writes all four surfaces in one pass so nothing ever disagrees.
 
-Once chosen:
-
-- `LICENSE` holds the **verbatim** upstream text — never summarized or reflowed.
+- `LICENSE` holds the **verbatim** GNU AGPL v3.0 text — never summarized or reflowed.
 - `LICENSE`, `pyproject.toml`, `README.md` and source headers must all name the
   same license. Any disagreement between them creates real ambiguity about which
   terms apply.
-- Every `.py` file under `src/` starts with `# SPDX-License-Identifier: <SPDX>`.
+- Every `.py` file under `src/` starts with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 - **Before adding any dependency**, check it against `scripts/check_licenses.py`
   and the allowlist in `docs/LICENSING.md`. An incompatible transitive
   dependency caught at add-time is a five-minute problem; caught two years later
@@ -416,14 +421,18 @@ Once chosen:
 
 ## Open questions for the owner
 
-Tracked in `.planning/PROJECT.md` and resolved during Discuss steps:
+Tracked in `.planning/PROJECT.md` and resolved during Discuss steps.
 
-1. Which genres are in scope for v1 — everything Beatport lists, or a focused
-   set (e.g. Techno, Tech House, Melodic H&T, DnB, Trance)?
-2. Is there an existing personal library / DJ history to fold in as ground truth?
-3. Does the owner have Discogs / Last.fm accounts for API tokens?
-4. Retention: keep bronze payloads forever (grows GBs/year), or compress and
-   prune after N months?
-5. Backup target for the Postgres volume — external disk, or none?
-6. License: AGPL-3.0-or-later (recommended), GPL-3.0-or-later, or a
-   source-available non-commercial license? Decided at the `01-04` checkpoint.
+**Resolved 2026-08-20:** license (AGPL-3.0-or-later) · genre scope (charts-only,
+taxonomy deferred) · Beatport API access (none — minimal scraping on chart reset)
+· Spotify's role (metadata + playlist charts, never tempo).
+
+**Still open:**
+
+1. Spotify developer app credentials — account available to register one?
+2. Which Spotify playlists beyond `mint`? (And does editorial-playlist access
+   actually work for a new app — verified in `04-04`.)
+3. Personal library / DJ history to fold in as BPM/key ground truth?
+4. Discogs / Last.fm accounts for API tokens?
+5. Bronze retention — keep payloads forever, or compress and prune after N months?
+6. Backup target for the Postgres volume — external disk, or none?
