@@ -68,7 +68,7 @@ Core tables:
 |---|---|
 | `dim_artist` | one row per artist alias |
 | `dim_label` | one row per label (with parent_label_id) |
-| `dim_genre_source` / `dim_genre_canonical` / `bridge_genre_crosswalk` | SCD2 vendor genre + stable internal taxonomy |
+| ~~`dim_genre_source` / `dim_genre_canonical` / `bridge_genre_crosswalk`~~ | **Not in v1.** Charts-only scope makes genre a per-track attribute; the vendor string is stored verbatim on the track and no crosswalk is built |
 | `dim_release` | one row per release (catalog grouping) |
 | `dim_track` | one row per resolved track |
 | `bridge_track_artist` | (track, artist, role) |

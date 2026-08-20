@@ -188,7 +188,8 @@ rename date, and the break looks exactly like a real trend.
   dimension, type 2).
 - `dim_genre_canonical` — our own stable internal taxonomy, deliberately coarser
   than any vendor's.
-- `bridge_genre_crosswalk` — many-to-many mapping with `weight`, so a vendor
+- ⚠️ **Deferred, not built in v1** (charts-only scope — see PROJECT.md Key Decisions).
+  `bridge_genre_crosswalk` — many-to-many mapping with `weight`, so a vendor
   split can be mapped back onto one canonical genre for continuity.
 - Every long-run chart must be able to render on the canonical taxonomy, and
   every taxonomy change date must be available as an annotation layer.
@@ -271,7 +272,7 @@ Confirm each of these is handled before trusting a series:
 - [ ] Duplicate releases (re-release, remaster, compilation inclusion) deduped
 - [ ] Half/double-time BPM folded, with the reported value preserved
 - [ ] Enharmonic keys normalized
-- [ ] Genre renames crosswalked to the canonical taxonomy
+- [x] ~~Genre renames crosswalked to the canonical taxonomy~~ — deferred; v1 keeps the vendor string verbatim
 - [ ] Chart vs. catalog population labelled
 - [ ] Denominator (release count) reported alongside every rate
 - [ ] Coverage ramp accounted for — our own collection start date is not a trend

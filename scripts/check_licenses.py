@@ -55,7 +55,10 @@ DENIED: set[str] = {
 # project's own LICENSE file. Every entry MUST carry a justification — an
 # exception without a reason is not an exception, it is a silenced alarm.
 EXCEPTIONS: dict[str, tuple[str, str]] = {
-    "typing-extensions": ("PSF-2.0", "Ships under the PSF license; metadata reports a bare file path"),
+    "typing-extensions": (
+        "PSF-2.0",
+        "Ships under the PSF license; metadata reports a bare file path",
+    ),
     "typing_extensions": ("PSF-2.0", "Same package, underscore-normalized name"),
 }
 
@@ -145,7 +148,7 @@ def collect() -> list[tuple[str, str, str | None, str]]:
 
 def write_report(rows: list[tuple[str, str, str | None, str]], path: Path) -> None:
     lines = [
-        f"# Third-party licenses\n",
+        "# Third-party licenses\n",
         f"\nProject license: **{PROJECT_LICENSE}**\n",
         "\nGenerated — do not edit by hand. Regenerate with:\n",
         "\n```bash\nuv run python scripts/check_licenses.py --report\n```\n",
@@ -176,9 +179,7 @@ def main() -> int:
 
     unresolved = [(n, v, s) for n, v, spdx, s in rows if spdx is None]
     denied = [(n, v, spdx) for n, v, spdx, _ in rows if spdx in DENIED]
-    unknown = [
-        (n, v, spdx) for n, v, spdx, _ in rows if spdx is not None and spdx not in ALLOWED
-    ]
+    unknown = [(n, v, spdx) for n, v, spdx, _ in rows if spdx is not None and spdx not in ALLOWED]
 
     failed = False
     if denied:
@@ -203,7 +204,7 @@ def main() -> int:
         )
 
     if failed:
-        print(f"\nFAIL — see docs/LICENSING.md for the remediation path.", file=sys.stderr)
+        print("\nFAIL — see docs/LICENSING.md for the remediation path.", file=sys.stderr)
         return 1
 
     print(f"OK — {len(rows)} distributions, all compatible with {PROJECT_LICENSE}")

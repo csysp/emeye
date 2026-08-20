@@ -76,7 +76,9 @@ release landscape — every other feature is replaceable, the history is not.
   cross-checks and bulk dumps.
 - **Every vendor taxonomy drifts.** Beatport has repeatedly split and renamed
   genres; a series keyed on the vendor string breaks at each rename and the
-  break looks like a trend. Handled via a versioned genre dimension + crosswalk.
+  break looks like a trend. **Not modelled in v1** — charts-only scope means
+  genre is a per-track attribute, so the vendor string is preserved verbatim and
+  the crosswalk stays possible without being built.
 - **The vendor tag is the object of study, not a proxy for it.** emeye is an
   aggregate analytics tool over what the industry publishes: the question is
   what BPM and key labels *release and chart at*, not what a waveform would say.

@@ -14,8 +14,8 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from emeye.config import get_settings
+from emeye.db import models  # noqa: F401  -- imported for the autogenerate side effect
 from emeye.db.base import Base
-from emeye.db import models  # noqa: F401  -- import for autogenerate side effect
 
 config = context.config
 

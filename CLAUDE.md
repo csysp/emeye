@@ -327,14 +327,29 @@ throughput than that, the design is wrong.
 ## Working in this repo
 
 ```bash
+# available now
+make help        # list every target with a description
 make up          # start postgres + app containers
+make down        # stop containers, keep data
 make migrate     # alembic upgrade head
-make ingest      # run today's collectors
-make dbt         # build + test silver/gold models
-make test        # pytest
-make lint        # ruff + mypy
-make app         # streamlit exploration UI
+make revision m="..."   # autogenerate a migration
+make downgrade   # roll back one migration
 make psql        # shell into the warehouse
+make shell       # bash in the app container
+make logs        # follow container logs
+make licenses    # dependency license compatibility check
+make clean       # remove containers + image, KEEP the database volume
+make nuke        # remove containers AND data volumes (prompts for confirmation)
+
+# declared but not yet wired — these exit 2 until the phase that owns them lands
+make test        # pytest                      (plan 01-03)
+make test-integration                          # (plan 01-03)
+make lint        # ruff + mypy                 (plan 01-03)
+
+# not yet defined — added by the phase that delivers them
+make ingest      # run today's collectors      (phase 3)
+make dbt         # build + test silver/gold    (phase 6)
+make app         # streamlit exploration UI    (phase 8)
 ```
 
 Everything runs in containers. If a command needs a host-level tool other than

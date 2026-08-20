@@ -36,8 +36,7 @@ def upgrade() -> None:
     )
     op.execute(
         sa.text(
-            "insert into schema_meta (key, value) "
-            "values ('schema_initialized_at', now()::text)"
+            "insert into schema_meta (key, value) values ('schema_initialized_at', now()::text)"
         )
     )
 

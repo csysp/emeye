@@ -20,7 +20,7 @@ operational bits that keep a decade-long dataset alive.
 - [ ] **Phase 2: Ingestion Framework** - Bronze store, polite HTTP layer, run tracking, idempotent jobs
 - [ ] **Phase 3: Beatport Connector** - Catalog + daily chart snapshots landing in bronze and silver
 - [ ] **Phase 4: Open-Data Enrichment** - MusicBrainz, Discogs, Deezer, Last.fm/ListenBrainz + entity resolution
-- [ ] **Phase 5: Domain Normalization** - Titles, keys, tempo folding, genre crosswalk in silver/dbt
+- [ ] **Phase 5: Domain Normalization** - Titles, keys, tempo folding, BPM resolution ladder
 - [ ] **Phase 6: Trend Analytics** - Tempo, key, title, label and artist marts with honest denominators
 - [ ] **Phase 7: Forecasting** - Backtesting harness, baselines, models, persisted and scored forecasts
 - [ ] **Phase 8: Exploration & Operations** - Streamlit UI, Parquet/DuckDB export, backup, retention
@@ -30,7 +30,7 @@ operational bits that keep a decade-long dataset alive.
 ### Phase 1: Foundation
 **Goal**: A cloned repo becomes a running, empty warehouse with one command, under a license that protects the work, with the quality gates that keep it honest in place from commit one.
 **Depends on**: Nothing (first phase)
-**Requirements**: REQ-01, REQ-24, REQ-25, REQ-27, REQ-29, REQ-30
+**Requirements**: REQ-01, REQ-24, REQ-25, REQ-27, REQ-29, REQ-30, REQ-31
 **Success Criteria** (what must be TRUE):
   1. `make up && make migrate` on a fresh clone yields a running Postgres with schema applied, with Docker as the only host dependency
   2. `emeye --help` runs inside the container and lists command groups
@@ -121,7 +121,7 @@ Plans:
 - [ ] 05-01: Title/mix-name grammar parser + oddity fixture corpus
 - [ ] 05-02: Key canonicalization + Camelot/Open Key derivation
 - [ ] 05-03: Tempo folding with per-genre bands, reported value preserved
-- [ ] 05-04: Genre SCD2 + canonical taxonomy + crosswalk; artist role/alias splitting
+- [ ] 05-04: BPM resolution ladder (REQ-33) with recorded provenance; artist role/alias splitting
 
 ### Phase 6: Trend Analytics
 **Goal**: Answer the actual questions — with denominators, population labels and coverage caveats attached so the answers survive scrutiny.

@@ -9,14 +9,17 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Any
+from typing import TYPE_CHECKING
 
 import structlog
+
+if TYPE_CHECKING:
+    from emeye.config import Settings
 
 _configured = False
 
 
-def configure_logging(settings: Any) -> None:
+def configure_logging(settings: Settings) -> None:
     """Configure structlog once per process.
 
     Idempotent: calling this more than once (the CLI callback, a test fixture,

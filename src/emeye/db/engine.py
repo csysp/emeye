@@ -59,7 +59,7 @@ def check_connection() -> bool:
     try:
         with get_engine().connect() as conn:
             conn.execute(text("select 1"))
-    except Exception as exc:  # noqa: BLE001 - deliberately broad; reported, not swallowed
+    except Exception as exc:  # deliberately broad: reported and reduced to a bool, not swallowed
         log.warning("database_unreachable", error=str(exc))
         return False
     return True

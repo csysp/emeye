@@ -44,7 +44,7 @@ def _version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    version: bool = typer.Option(
+    version: bool = typer.Option(  # noqa: ARG001 - consumed by the eager callback above
         False,
         "--version",
         callback=_version_callback,
