@@ -1,0 +1,28 @@
+# Normalize line endings.
+#
+# Git for Windows defaults to core.autocrlf=true, which rewrites checked-out
+# files to CRLF. A shell script with CRLF line endings fails inside a Linux
+# container with a maximally confusing error — "no such file or directory" for
+# a file that plainly exists — because the kernel reads the shebang as
+# "/usr/bin/env bash\r" and looks for an interpreter with a carriage return in
+# its name. These files must stay LF on every platform.
+
+* text=auto eol=lf
+
+*.sh        text eol=lf
+Makefile    text eol=lf
+Dockerfile  text eol=lf
+*.py        text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.toml      text eol=lf
+.env.example text eol=lf
+
+# Binary — never touch
+*.png binary
+*.jpg binary
+*.parquet binary
+*.duckdb binary
+
+# The license text is byte-exact and must never be normalized or diffed
+LICENSE -text -diff
