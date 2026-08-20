@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: emeye
+
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    args:
+      UBUNTU_VERSION: "24.04"
+      APP_UID: "${EMEYE_UID:-1000}"
+      APP_GID: "${EMEYE_GID:-1000}"
+  image: emeye:dev
+  init: true          # PID-1 signal handling and zombie reaping
+  env_file: .env
+  environment:
+    EMEYE_POSTGRES_HOST: postgres
+    EMEYE_POSTGRES_PORT: "5432"
+  depends_on:
+    postgres:
+      condition: service_healthy
+  volumes:
+    # Bind-mounted for development: edit on the host, run in the container
+    # without a rebuild. Read-write because `make revision` writes generated
+    # migrations back into src/.
+    - ./src:/app/src
+    - ./alembic.ini:/app/alembic.ini:ro
+    - emeye-data:/data
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: "${EMEYE_POSTGRES_DB:-emeye}"
+      POSTGRES_USER: "${EMEYE_POSTGRES_USER:-emeye}"
+      POSTGRES_PASSWORD: "${EMEYE_POSTGRES_PASSWORD:?EMEYE_POSTGRES_PASSWORD must be set in .env}"
+      # Deterministic collation. Left to the host locale, index ordering can
+      # differ between machines and a restored dump may not match its source.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - emeye-pgdata:/var/lib/postgresql/data
+    ports:
+      # Loopback only. A personal warehouse has no business listening on
+      # every interface.
+      - "127.0.0.1:${EMEYE_POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${EMEYE_POSTGRES_USER:-emeye} -d ${EMEYE_POSTGRES_DB:-emeye}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    <<: *app-base
+    # Idle by default: this container is a place to run commands, not a daemon.
+    # Collectors run through the scheduler (phase 2) or `docker compose run`.
+    command: ["sleep", "infinity"]
+    restart: unless-stopped
+
+volumes:
+  emeye-pgdata:
+  emeye-data:

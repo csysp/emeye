@@ -30,6 +30,20 @@ Phase 2's job.
   the command differs. Keeps build time and drift down.
 - **D-04:** Multi-stage Dockerfile: builder installs into a venv via `uv sync
   --frozen`, runtime stage copies the venv. Non-root user in the runtime stage.
+- **D-04a (amended 2026-08-20, owner):** Base image is **`ubuntu:24.04`**, not
+  `python:3.12-slim`. Ubuntu 24.04 LTS ships CPython 3.12 in its main archive,
+  so the container runs the same interpreter build, glibc and OpenSSL as an
+  Ubuntu host — removing the "works in the container, not on the box" class of
+  problem that a Debian-slim or Alpine base can introduce.
+  Consequences that must be honored:
+  - `UV_PYTHON_PREFERENCE=only-system` is mandatory. Left to itself uv will
+    download its own managed CPython, silently defeating the entire point.
+  - Ubuntu 24.04 ships a built-in `ubuntu` account already holding UID 1000.
+    It is deleted so the app user can take UID 1000 and match a standard
+    single-user Linux desktop, keeping bind mounts writable with no host chown.
+  - The image depends only on Ubuntu's **main** archive. No package from
+    universe (this is why PID-1 handling uses compose `init: true` rather than
+    a `tini` package).
 
 ### Configuration
 - **D-05:** `pydantic-settings` is the single source of env truth. Nothing else

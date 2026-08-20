@@ -98,6 +98,7 @@ release landscape — every other feature is replaceable, the history is not.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
+| Container base is `ubuntu:24.04`, not `python:3.12-slim` | Ubuntu 24.04 ships CPython 3.12 in main, so container and Ubuntu host share interpreter build, glibc and OpenSSL. Removes a whole class of build/runtime divergence | ✓ Owner-requested |
 | PostgreSQL as system of record, DuckDB for ad-hoc | Postgres suits incremental idempotent upserts; DuckDB is better for exploratory scans over Parquet exports | — Pending |
 | dbt-core for silver→gold | Owner wants SQL-centric analytics; gives tests, lineage and cheap redefinition of derived metrics | — Pending |
 | Medallion (bronze/silver/gold) with immutable bronze | Parsers will be wrong; replayability from raw payloads avoids ever re-scraping | — Pending |

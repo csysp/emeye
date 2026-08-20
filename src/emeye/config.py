@@ -11,7 +11,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,6 +68,28 @@ class Settings(BaseSettings):
         description="Force JSON logs. None auto-detects: text on a TTY, JSON otherwise.",
     )
     service_name: str = "emeye"
+
+    @field_validator(
+        "log_json",
+        "discogs_token",
+        "lastfm_api_key",
+        "spotify_client_id",
+        "spotify_client_secret",
+        mode="before",
+    )
+    @classmethod
+    def _blank_is_unset(cls, value: object) -> object:
+        """Treat an empty environment variable as absent.
+
+        ``.env`` files and Compose both routinely pass ``KEY=`` for a value the
+        user has not filled in yet. Without this, ``EMEYE_LOG_JSON=`` fails
+        validation outright, and ``EMEYE_DISCOGS_TOKEN=`` becomes a
+        ``SecretStr("")`` that is truthy — so a credential check would read an
+        unset token as present.
+        """
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @property
     def database_url(self) -> str:
