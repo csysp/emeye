@@ -21,14 +21,14 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 ## Current Position
 
 Phase: 1 of 8 (Foundation)
-Plan: 0 of 4 in current phase
-Status: Executing wave 1 (`01-01` + `01-04`)
+Plan: 2 of 4 in current phase (wave 1 complete)
+Status: Wave 1 complete — ready for wave 2 (`01-02` container stack)
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 1:**
-- Wave 1 (parallel): `01-01` Python project skeleton · `01-04` Licensing & governance ⛔ blocking checkpoint
-- Wave 2: `01-02` Container stack, Postgres, Alembic
-- Wave 3: `01-03` Quality gates and CI
+- Wave 1 (parallel): ✅ `01-01` Python project skeleton · ✅ `01-04` Licensing & governance
+- Wave 2: ⬜ `01-02` Container stack, Postgres, Alembic ← next
+- Wave 3: ⬜ `01-03` Quality gates and CI
 
 The license checkpoint in `01-04` is **resolved** — AGPL-3.0-or-later. All four
 plans are now autonomous.
@@ -130,5 +130,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-08-20 — Phase 1 planning complete.
-Next step: Wave 1 (`01-01` Python project, `01-04` licensing), then wave 2
-(`01-02` container stack), then wave 3 (`01-03` quality gates + CI).
+Next step: Wave 2 — `01-02` container stack (Dockerfile, Compose, Postgres,
+Alembic, Makefile), then wave 3 `01-03` (quality gates + CI).
+
+**Carried into wave 3:** `scripts/check_licenses.py` exists and passes but is
+not yet wired into CI — `01-03` owns that wiring.
