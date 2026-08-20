@@ -150,3 +150,12 @@ make down && make up                    # persistence
 
 Most likely failure points, both loud rather than subtle: the `userdel -r
 ubuntu` step that frees UID 1000, and named-volume ownership for `/data`.
+
+**Windows note (owner hit this 2026-08-20):** the owner's desktop is Windows.
+`make` does not exist in PowerShell, so the documented commands failed with
+"no cmdlet found". Resolution: Windows is supported **via WSL2**, which is also
+the natural fit for an Ubuntu 24.04 container base. README now carries a
+Quickstart with the WSL2 path, a make-free command table, and troubleshooting.
+A `.gitattributes` forcing LF was added at the same time — Git for Windows
+defaults to autocrlf=true, and a CRLF `entrypoint.sh` fails in-container with a
+misleading "no such file or directory".
