@@ -1,0 +1,53 @@
+# --- vendored context-engineering framework (kept untracked on purpose) ---
+gsd-core/
+
+# --- secrets / local config ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- data (never committed: third-party payloads + large artifacts) ---
+data/
+exports/
+*.parquet
+*.duckdb
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
+pgdata/
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# --- dbt ---
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+profiles.yml
+
+# --- notebooks ---
+.ipynb_checkpoints/
+
+# --- editors / os ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- gsd runtime scratch ---
+.planning/todos/
+.planning/research/**/raw/
