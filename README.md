@@ -33,7 +33,20 @@ Development follows [GSD Core](https://github.com/open-gsd/gsd-core), cloned
 into `gsd-core/` and deliberately left untracked. Refresh with
 `git -C gsd-core pull`.
 
-## Legal
+## License
+
+**AGPL-3.0-or-later.** See [`LICENSE`](LICENSE) for the full text and
+[`docs/LICENSING.md`](docs/LICENSING.md) for the reasoning and the dependency
+compatibility policy.
+
+In plain terms: you may use, modify and share emeye freely, but if you
+distribute it — **or run a modified version as a network service** — you must
+offer your users the complete source of your version under these same terms.
+
+## Legal posture on collected data
+
+A separate concern from the license above: that one governs emeye's own code,
+this one governs how emeye treats other people's data.
 
 Personal research use only. Collectors honor `robots.txt`, rate-limit to a
 trickle, identify themselves honestly, and never evade bot protection. No
