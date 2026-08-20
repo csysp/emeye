@@ -21,14 +21,14 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 ## Current Position
 
 Phase: 1 of 8 (Foundation)
-Plan: 2 of 4 in current phase (wave 1 complete)
-Status: Wave 1 complete — ready for wave 2 (`01-02` container stack)
+Plan: 3 of 4 in current phase (wave 2 built, runtime unverified)
+Status: Wave 2 written and statically verified — needs one real build on the owner's Ubuntu box
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 1:**
 - Wave 1 (parallel): ✅ `01-01` Python project skeleton · ✅ `01-04` Licensing & governance
-- Wave 2: ⬜ `01-02` Container stack, Postgres, Alembic ← next
-- Wave 3: ⬜ `01-03` Quality gates and CI
+- Wave 2: ⚠️ `01-02` Container stack — written, statically verified, **never built** (sandbox blocks Docker Hub)
+- Wave 3: ⬜ `01-03` Quality gates and CI ← next
 
 The license checkpoint in `01-04` is **resolved** — AGPL-3.0-or-later. All four
 plans are now autonomous.
@@ -134,4 +134,19 @@ Next step: Wave 2 — `01-02` container stack (Dockerfile, Compose, Postgres,
 Alembic, Makefile), then wave 3 `01-03` (quality gates + CI).
 
 **Carried into wave 3:** `scripts/check_licenses.py` exists and passes but is
-not yet wired into CI — `01-03` owns that wiring.
+not yet wired into CI — `01-03` owns that wiring. `make test`/`test-integration`
+/`lint` are stubs exiting 2.
+
+⚠️ **Owner action required before Phase 1 closes.** The container image has
+never been built — this sandbox's network policy blocks Docker Hub layer
+downloads (403), so `ubuntu:24.04` and `postgres:16` could not be pulled. Run on
+the Ubuntu machine:
+
+```bash
+make up && make migrate && make psql    # then \dt
+make downgrade && make migrate          # round-trip
+make down && make up                    # persistence
+```
+
+Most likely failure points, both loud rather than subtle: the `userdel -r
+ubuntu` step that frees UID 1000, and named-volume ownership for `/data`.
