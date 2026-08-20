@@ -16,7 +16,7 @@ operational bits that keep a decade-long dataset alive.
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Foundation** - Docker Compose warehouse, CLI skeleton, migrations, CI
+- [ ] **Phase 1: Foundation** - Licensing, Docker Compose warehouse, CLI skeleton, migrations, CI
 - [ ] **Phase 2: Ingestion Framework** - Bronze store, polite HTTP layer, run tracking, idempotent jobs
 - [ ] **Phase 3: Beatport Connector** - Catalog + daily chart snapshots landing in bronze and silver
 - [ ] **Phase 4: Open-Data Enrichment** - MusicBrainz, Discogs, Deezer, Last.fm/ListenBrainz + entity resolution
@@ -28,21 +28,23 @@ operational bits that keep a decade-long dataset alive.
 ## Phase Details
 
 ### Phase 1: Foundation
-**Goal**: A cloned repo becomes a running, empty warehouse with one command, and the quality gates that keep it honest are in place from commit one.
+**Goal**: A cloned repo becomes a running, empty warehouse with one command, under a license that protects the work, with the quality gates that keep it honest in place from commit one.
 **Depends on**: Nothing (first phase)
-**Requirements**: REQ-01, REQ-24, REQ-25, REQ-27, REQ-29
+**Requirements**: REQ-01, REQ-24, REQ-25, REQ-27, REQ-29, REQ-30
 **Success Criteria** (what must be TRUE):
   1. `make up && make migrate` on a fresh clone yields a running Postgres with schema applied, with Docker as the only host dependency
   2. `emeye --help` runs inside the container and lists command groups
   3. `make lint` and `make test` pass and run the identical commands CI runs
   4. Tests execute with networking disabled
   5. No credential or third-party payload can be committed (gitignore + CI check)
-**Plans**: 3 plans
+  6. The repository carries a deliberately chosen strong protective license, applied consistently across LICENSE, packaging metadata and source headers, with dependency compatibility verified
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: Compose stack (postgres, app), Dockerfile, Makefile, .env.example
-- [ ] 01-02: Python project — uv, Typer CLI skeleton, pydantic-settings config, structured logging, Alembic wiring
+- [ ] 01-01: Python project — uv, Typer CLI skeleton, pydantic-settings config, structured logging
+- [ ] 01-02: Container stack — Dockerfile, compose (postgres + app), Makefile, .env.example, Alembic wiring
 - [ ] 01-03: Quality gates — ruff, mypy, pytest, pre-commit, CI workflow, secret/payload checks
+- [ ] 01-04: Licensing & governance — choose and apply a strong protective license, verify dependency compatibility
 
 ### Phase 2: Ingestion Framework
 **Goal**: A reusable, polite, replayable ingestion substrate — so every later connector is a thin adapter rather than its own snowflake.
@@ -174,7 +176,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/4 | Not started | - |
 | 2. Ingestion Framework | 0/3 | Not started | - |
 | 3. Beatport Connector | 0/4 | Not started | - |
 | 4. Open-Data Enrichment | 0/4 | Not started | - |

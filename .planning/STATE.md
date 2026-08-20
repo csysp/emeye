@@ -1,10 +1,10 @@
 ---
 gsd_state_version: '1.0'
-status: planning
+status: executing
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 28
+  total_plans: 29
   completed_plans: 0
   percent: 0
 ---
@@ -16,14 +16,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-20)
 
 **Core value:** A trustworthy, continuously-growing longitudinal dataset of the electronic music release landscape.
-**Current focus:** Phase 1 — Foundation (not started)
+**Current focus:** Phase 1 — Foundation (planned, ready to execute)
 
 ## Current Position
 
 Phase: 1 of 8 (Foundation)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-08-20 — Project initialized. CLAUDE.md, docs (DATA-SOURCES, DOMAIN, ARCHITECTURE) and planning artifacts written; gsd-core vendored untracked.
+Plan: 0 of 4 in current phase
+Status: Ready to execute
+Last activity: 2026-08-20 — Phase 1 planned. `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
+
+**Execution waves for Phase 1:**
+- Wave 1 (parallel): `01-01` Python project skeleton · `01-04` Licensing & governance ⛔ blocking checkpoint
+- Wave 2: `01-02` Container stack, Postgres, Alembic
+- Wave 3: `01-03` Quality gates and CI
+
+`01-04` is the only non-autonomous plan in the phase — it stops for the license
+decision. Everything else runs unattended.
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -53,6 +61,9 @@ affecting current work:
 - [Init]: Beatport collector gated behind explicit opt-in; ToS prohibits automated collection
 - [Init]: Spotify excluded as tempo/key source — audio-features deprecated for new apps
 - [Init]: Typer CLI + cron container instead of an orchestrator; job graph is shallow
+- [Phase 1 planning]: Licensing promoted to a first-class Phase 1 deliverable (01-04) with a blocking checkpoint — recommendation AGPL-3.0-or-later
+- [Phase 1 planning]: Source enable flags default to False, so merging a collector never starts collection
+- [Phase 1 planning]: Tests run with outbound networking blocked at the socket layer, not by convention
 
 ### Pending Todos
 
@@ -67,6 +78,10 @@ None yet.
 - **Time-to-value is long by nature.** Meaningful trend and forecast output needs
   12–24 months of self-collected chart history. Catalog backfill via release
   dates partially offsets this; expectations should be set accordingly.
+- **License decision is pending and blocking.** Plan 01-04 stops at a checkpoint
+  until the license is chosen. `01-01` deliberately leaves `pyproject.toml`
+  license metadata empty so nothing has to be walked back — but `01-03` depends
+  on `01-04`, so an unanswered checkpoint stalls wave 3.
 - **Open questions in PROJECT.md** (genre scope, tokens, retention, backup
   target) should be resolved during the Phase 1 Discuss step.
 
@@ -83,5 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-20 — Project initialization.
-Next step: Discuss + plan Phase 1 (Foundation).
+Last session: 2026-08-20 — Phase 1 planning complete.
+Next step: Execute Phase 1 wave 1 (`01-01` and `01-04` in parallel). `01-04`
+will stop at the license checkpoint and needs an answer to proceed.

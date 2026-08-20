@@ -42,6 +42,8 @@ release landscape — every other feature is replaceable, the history is not.
 - [ ] REQ-18 — Collectors are polite: robots.txt, rate limits, honest UA, opt-in gating
 - [ ] REQ-19 — `emeye status` surfaces ingest health from `ingest_run`
 - [ ] REQ-20 — `emeye backup` produces a restorable warehouse dump
+- [ ] REQ-30 — Repository carries a strong protective (copyleft) license, applied consistently
+- [ ] REQ-31 — Runtime dependencies are license-compatible with that choice, checked in CI
 
 ### Out of Scope
 
@@ -95,6 +97,7 @@ release landscape — every other feature is replaceable, the history is not.
 | Charts ingestion ships before analytics | Chart snapshots are irrecoverable; analytics can be built against data already collected | — Pending |
 | Beatport collector behind an explicit opt-in flag | ToS prohibits automated collection; the owner should make that choice consciously | — Pending |
 | Spotify excluded as a tempo/key source | `audio-features` deprecated for new apps Nov 2024; building on it would strand the analytics | — Pending |
+| Strong protective (copyleft) license, AGPL-3.0-or-later recommended | The Streamlit surface makes this network-deployable, so a plain GPL leaves the SaaS loophole open; AGPL also keeps Essentia (AGPL-3.0) usable for the deferred audio ground-truth work | — Pending (decided in plan 01-04) |
 | Store keys as (tonic_pc, mode), render Camelot on read | Enharmonic spellings otherwise split one key into phantom duplicates | — Pending |
 | Genre modelled as SCD2 + canonical crosswalk | Vendor taxonomy renames otherwise fabricate false trend breaks | — Pending |
 
@@ -106,6 +109,8 @@ release landscape — every other feature is replaceable, the history is not.
 4. Bronze retention — keep forever, or compress and prune after N months?
 5. Backup target for the Postgres volume?
 6. Does the owner have (or want to pursue) sanctioned Beatport API access?
+7. License: AGPL-3.0-or-later (recommended), GPL-3.0-or-later, or a
+   source-available non-commercial licence? Decided at the 01-04 checkpoint.
 
 ---
 *Last updated: 2026-08-20 after project initialization*

@@ -364,6 +364,30 @@ files directly and follow them by hand.
 
 ---
 
+## Licensing
+
+emeye is licensed under a **strong protective (copyleft) license**, chosen at a
+blocking checkpoint in plan `01-04` rather than defaulted. Until that plan runs,
+`pyproject.toml` deliberately carries **no** license metadata — a placeholder
+that later disagrees with the decision is worse than a gap.
+
+Recommendation on the table: **AGPL-3.0-or-later**. The Streamlit surface makes
+this network-deployable, so a plain GPL would leave the hosted-service loophole
+open; AGPL closes it, and it keeps Essentia (AGPL-3.0) usable for the deferred
+audio ground-truth work.
+
+Once chosen:
+
+- `LICENSE` holds the **verbatim** upstream text — never summarized or reflowed.
+- `LICENSE`, `pyproject.toml`, `README.md` and source headers must all name the
+  same license. Any disagreement between them creates real ambiguity about which
+  terms apply.
+- Every `.py` file under `src/` starts with `# SPDX-License-Identifier: <SPDX>`.
+- **Before adding any dependency**, check it against `scripts/check_licenses.py`
+  and the allowlist in `docs/LICENSING.md`. An incompatible transitive
+  dependency caught at add-time is a five-minute problem; caught two years later
+  it is a rewrite.
+
 ## Agent working agreements
 
 **Do**
@@ -401,3 +425,5 @@ Tracked in `.planning/PROJECT.md` and resolved during Discuss steps:
 4. Retention: keep bronze payloads forever (grows GBs/year), or compress and
    prune after N months?
 5. Backup target for the Postgres volume — external disk, or none?
+6. License: AGPL-3.0-or-later (recommended), GPL-3.0-or-later, or a
+   source-available non-commercial license? Decided at the `01-04` checkpoint.

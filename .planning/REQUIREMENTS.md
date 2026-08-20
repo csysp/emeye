@@ -43,6 +43,8 @@ being renumbered or deleted.
 | REQ-23 | Sources whose terms prohibit automated access are gated behind explicit opt-in | 2, 3 | Default config disables them; enabling requires a deliberate setting |
 | REQ-24 | No third-party payloads are committed or redistributed | 1 | `.gitignore` covers data/exports; CI check rejects payload files in a diff |
 | REQ-25 | No credentials in the repo | 1 | `.env` gitignored, `.env.example` documents every variable, secret scan in CI |
+| REQ-30 | The repository carries a strong protective (copyleft) license, applied consistently | 1 | `LICENSE` present, `pyproject.toml` metadata matches, source headers consistent, choice recorded as a Key Decision |
+| REQ-31 | Every runtime dependency is license-compatible with the chosen license | 1, and on every dependency addition | A license inventory is generated and checked in CI; an incompatible dependency fails the build |
 
 ## Quality
 
