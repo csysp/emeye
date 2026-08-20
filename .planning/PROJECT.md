@@ -77,11 +77,12 @@ release landscape — every other feature is replaceable, the history is not.
 - **Every vendor taxonomy drifts.** Beatport has repeatedly split and renamed
   genres; a series keyed on the vendor string breaks at each rename and the
   break looks like a trend. Handled via a versioned genre dimension + crosswalk.
-- **Vendor key/BPM detection is algorithmic and imperfect, and we have no ground
-  truth.** There is no personal library to analyze, so local audio analysis is
-  out of scope. Cross-source disagreement (Beatport vs Deezer) is therefore the
-  *only* quality signal available — which makes retaining disagreement rather
-  than averaging it away load-bearing, not merely tidy.
+- **The vendor tag is the object of study, not a proxy for it.** emeye is an
+  aggregate analytics tool over what the industry publishes: the question is
+  what BPM and key labels *release and chart at*, not what a waveform would say.
+  The upstream catalogs are the sources of truth for their own data, false-read
+  rates are low, and multi-source cross-referencing resolves the residue. Audio
+  re-derivation would answer a question this project is not asking.
 - Development method is GSD Core, vendored untracked at `gsd-core/`.
 
 ## Constraints
@@ -114,7 +115,7 @@ release landscape — every other feature is replaceable, the history is not.
 | `mint` is the only Spotify playlist in v1 | One pipe, built well, proves the pattern; further playlists are additive and cost nothing to add later except their own start date | ✓ Owner-confirmed |
 | Bronze payloads retained indefinitely, no pruning | Collection volume is a trickle by design (~2 chart docs + a handful of detail docs per day), so indefinite retention costs single-digit GB over a decade. Replayability is worth far more than the disk | ✓ Owner-confirmed |
 | Backup is manual to removable media | Single-user local-first tool; an automated offsite target would contradict the no-cloud constraint. `emeye backup` makes the file, the human moves it | ✓ Owner-confirmed |
-| No local audio analysis / no ground-truth corpus | No personal library to draw on; this is forecasting intelligence, not library management. Essentia and librosa drop out of the stack | ✓ Owner-confirmed |
+| No local audio analysis | emeye aggregates downstream sources of truth; vendor-reported values are the signal, not a noisy measurement of it. Expected false-read rates are low and cross-referencing covers the rest. Essentia and librosa drop out of the stack | ✓ Owner-confirmed |
 | **AGPL-3.0-or-later** | Chosen by the owner. The Streamlit surface makes this network-deployable, so a plain GPL would leave the hosted-service loophole open; AGPL closes it, keeps Essentia (AGPL-3.0) available for the deferred audio ground-truth work, and stays compatible with the MIT/BSD/Apache-2.0 stack | ✓ Decided 2026-08-20 |
 | Store keys as (tonic_pc, mode), render Camelot on read | Enharmonic spellings otherwise split one key into phantom duplicates | — Pending |
 | Genre modelled as SCD2 + canonical crosswalk | ~~Vendor taxonomy renames otherwise fabricate false trend breaks~~ Superseded: charts-only scope removes the need; genre stays a plain attribute | ✗ Dropped for v1 |

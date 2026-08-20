@@ -15,13 +15,13 @@ Status legend: 🟢 planned core · 🟡 optional / later · 🔴 out of scope f
 source that reliably carries BPM **and** musical key **and** a genre taxonomy
 built for DJs, on essentially the whole commercial release landscape.
 
-**Not the source of truth.** Beatport is the *primary* origin for BPM and key —
-most tempo values will enter the warehouse from here — but its values are
-vendor-supplied and algorithmically derived, and they are cross-checked against
-Deezer, MusicBrainz and Discogs rather than trusted outright. Where sources
-disagree, the disagreement is retained and reported (see REQ-33 and the BPM
-resolution ladder below). Suppressing a conflict to produce one tidy number
-destroys the only signal we have about data quality.
+**Primary origin, cross-referenced rather than sole-sourced.** Most tempo and
+key values enter the warehouse from Beatport. They are vendor-supplied, and they
+are cross-checked against Deezer, MusicBrainz and Discogs rather than taken
+alone — not because vendor data is expected to be wrong (false-read rates are
+low, and these catalogs are the sources of truth for their own data) but because
+coverage is patchy and a second reading is cheap. Where sources disagree, keep
+both and pick by ladder rank; see the BPM resolution ladder below.
 
 **Access reality**
 
@@ -282,18 +282,22 @@ visible.
 | 2 | **Deezer** | Free, unauthenticated `bpm` on the track object — the main independent check |
 | 3 | **AcousticBrainz dump** | Collection stopped in 2022, but the historical dump is still downloadable and MBID-keyed. Static lookup, zero request cost. Verify current availability before relying on it |
 | 4 | **MusicBrainz / Discogs** | Sparse for tempo; useful mainly via linked data |
-| ~~5~~ | ~~Local audio analysis (Essentia/librosa)~~ | **Out of scope (owner, 2026-08-20)** — no personal library exists. This project is forecasting intelligence, not library management |
+| ~~5~~ | ~~Local audio analysis (Essentia/librosa)~~ | **Out of scope (owner, 2026-08-20).** emeye aggregates what the industry publishes — the vendor tag is the object of study, not a noisy measurement of it. Re-deriving tempo from audio would answer a different question |
 
 Rules:
 
-- Record `bpm_source` and `bpm_confidence` on every resolved value. A tempo with
-  no provenance is not usable in a trend series.
-- **Never average across sources.** BPM is ambiguous by a factor of two — a
-  174 BPM D&B track and an 87 BPM reading of the same track average to a number
-  that describes nothing. Pick a winner by ladder rank, fold to the canonical
-  band, and keep the alternatives.
-- A disagreement beyond the half/double-time relationship is a **quality signal
-  worth surfacing**, not noise to smooth away.
+- Record `bpm_source` on every resolved value. This is **provenance and coverage
+  accounting** — which source filled which gap, and how much of a series rests
+  on the fallback tiers — not a quality audit of the vendors.
+- **Never average across sources.** BPM is ambiguous by a factor of two: 87 and
+  174 are both correct readings of the same drum & bass track, and their mean of
+  130.5 describes nothing. This is a hazard in the *representation*, entirely
+  independent of how accurate the sources are, so it holds no matter how much
+  the upstream data is trusted. Pick a winner by ladder rank, fold to the
+  canonical band, keep the alternatives.
+- Expect **low disagreement rates**. Where sources do differ beyond the
+  half/double-time relationship it is worth a look, but this is housekeeping —
+  the project does not treat vendor data as suspect by default.
 
 ---
 
