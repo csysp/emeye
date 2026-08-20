@@ -151,11 +151,24 @@ make down && make up                    # persistence
 Most likely failure points, both loud rather than subtle: the `userdel -r
 ubuntu` step that frees UID 1000, and named-volume ownership for `/data`.
 
-**Windows note (owner hit this 2026-08-20):** the owner's desktop is Windows.
-`make` does not exist in PowerShell, so the documented commands failed with
-"no cmdlet found". Resolution: Windows is supported **via WSL2**, which is also
-the natural fit for an Ubuntu 24.04 container base. README now carries a
-Quickstart with the WSL2 path, a make-free command table, and troubleshooting.
-A `.gitattributes` forcing LF was added at the same time — Git for Windows
-defaults to autocrlf=true, and a CRLF `entrypoint.sh` fails in-container with a
-misleading "no such file or directory".
+**Platform posture (settled 2026-08-20):** the owner develops and tests on
+**Windows** and deploys to **Ubuntu 24.04 LTS**. Both are first-class.
+
+- `make.ps1` gives Windows the same 17 targets as the Makefile, with Docker
+  Desktop as the only prerequisite — no WSL, no make, no host Python. The
+  interim "Windows via WSL2" guidance is **withdrawn**.
+- `scripts/check_task_parity.py` fails the build when the two runners diverge,
+  including a target handled but missing from help. Two runners is the price of
+  native support on both platforms; the check is what stops that price turning
+  into a silent bug where a target works on one platform only.
+- compose is split: `compose.yaml` is the **deployment** definition and runs the
+  built image; `compose.override.yaml` is auto-applied for development and
+  bind-mounts `src/`. Deployment **must** pass `-f compose.yaml`, or the
+  container runs host source instead of the image that was tested.
+- `.gitattributes` forces LF (now including `*.ps1`). Git for Windows defaults
+  to autocrlf=true, and a CRLF `entrypoint.sh` fails in-container with a
+  misleading "no such file or directory".
+- Note the UID asymmetry: `EMEYE_UID`/`EMEYE_GID` matter on the Ubuntu
+  deployment host but are inert on Windows, where Docker Desktop synthesizes
+  ownership for bind mounts. A permissions problem will therefore appear at
+  deployment, not during development.
