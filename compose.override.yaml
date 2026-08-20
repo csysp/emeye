@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Development overrides. Docker Compose applies this file automatically, so
+# `docker compose up` on a workstation gets live source without a rebuild.
+#
+# Deployment must bypass it explicitly:
+#
+#   docker compose -f compose.yaml up -d
+#
+# Nothing here should ever be required for the app to function — if the stack
+# only works with this file applied, that is a bug in compose.yaml.
+
+services:
+  app:
+    volumes:
+      # Live source. Read-write because `make revision` / `.\make.ps1 revision`
+      # writes generated migrations back into src/.
+      - ./src:/app/src
+      - ./alembic.ini:/app/alembic.ini:ro
+      - emeye-data:/data

@@ -26,3 +26,6 @@ Dockerfile  text eol=lf
 
 # The license text is byte-exact and must never be normalized or diffed
 LICENSE -text -diff
+
+# PowerShell reads LF fine; keep it consistent with everything else
+*.ps1       text eol=lf

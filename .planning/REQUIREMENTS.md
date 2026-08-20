@@ -8,7 +8,9 @@ being renumbered or deleted.
 
 | ID | Requirement | Phase | Acceptance |
 |---|---|---|---|
-| REQ-01 | The whole system starts with `docker compose up` on Linux, macOS and Windows/WSL2 | 1 | Fresh clone → `make up && make migrate` succeeds with only Docker installed |
+| REQ-01 | The whole system starts from a fresh clone on Windows, Linux and macOS with Docker as the only prerequisite | 1 | Windows: `.\make.ps1 up; .\make.ps1 migrate` in PowerShell. Linux/macOS: `make up && make migrate`. Neither requires WSL, make, or a host Python |
+| REQ-34 | The Windows and Unix task runners expose an identical set of targets | 1 | `scripts/check_task_parity.py` passes in CI; divergence fails the build |
+| REQ-35 | The deployment compose definition runs the built image, not host source | 1 | `docker compose -f compose.yaml config` contains no bind mount of `src/` |
 | REQ-02 | Raw upstream payloads are stored immutably; parsing is replayable without re-fetching | 2 | `emeye reparse <source>` rebuilds silver from bronze alone, offline |
 | REQ-03 | Daily Beatport chart snapshots are captured with no gaps | 3 | `fct_chart_position` has one row set per chart per day since ingest start; gaps are detected and reported |
 | REQ-04 | Beatport catalog metadata is ingested: BPM, key, genre/subgenre, label, catalog no., artists, remixers, both date fields, ISRC, length | 3 | Sampled tracks match the source page field-for-field |

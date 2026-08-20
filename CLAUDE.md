@@ -326,6 +326,11 @@ throughput than that, the design is wrong.
 
 ## Working in this repo
 
+**Windows uses `.\make.ps1 <target>`; Linux/macOS use `make <target>`.** The two
+runners expose identical targets and `scripts/check_task_parity.py` fails CI if
+they diverge. Development happens on Windows, deployment targets Ubuntu 24.04
+LTS — a change that only works on one of them is not done.
+
 ```bash
 # available now
 make help        # list every target with a description
@@ -338,6 +343,7 @@ make psql        # shell into the warehouse
 make shell       # bash in the app container
 make logs        # follow container logs
 make licenses    # dependency license compatibility check
+make ps          # container status
 make clean       # remove containers + image, KEEP the database volume
 make nuke        # remove containers AND data volumes (prompts for confirmation)
 
@@ -353,7 +359,14 @@ make app         # streamlit exploration UI    (phase 8)
 ```
 
 Everything runs in containers. If a command needs a host-level tool other than
-Docker, that is a bug in the Makefile.
+Docker, that is a bug in the task runner — on **both** platforms.
+
+**Deployment bypasses the dev override**, so the container runs the built image
+rather than host source:
+
+```bash
+docker compose -f compose.yaml up -d --build   # note the -f
+```
 
 ---
 

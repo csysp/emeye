@@ -1,4 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Base stack — this is the DEPLOYMENT definition. The app runs the code baked
+# into the image, which is the code that was built and tested.
+#
+# `compose.override.yaml` sits alongside this file and is applied automatically
+# by Docker Compose for local development, where it bind-mounts ./src so edits
+# take effect without a rebuild.
+#
+#   development (Windows/desktop):  docker compose up -d
+#   deployment  (Ubuntu 24.04 LTS): docker compose -f compose.yaml up -d
+#
+# The `-f compose.yaml` is load-bearing on the deployment host: without it
+# Compose picks up the override and the container would run whatever happens to
+# be in the host's src/ directory rather than the image you shipped.
 name: emeye
 
 x-app-base: &app-base
@@ -19,11 +33,6 @@ x-app-base: &app-base
     postgres:
       condition: service_healthy
   volumes:
-    # Bind-mounted for development: edit on the host, run in the container
-    # without a rebuild. Read-write because `make revision` writes generated
-    # migrations back into src/.
-    - ./src:/app/src
-    - ./alembic.ini:/app/alembic.ini:ro
     - emeye-data:/data
 
 services:

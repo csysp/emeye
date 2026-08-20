@@ -22,7 +22,9 @@ release landscape — every other feature is replaceable, the history is not.
 
 ### Active
 
-- [ ] REQ-01 — Whole system runs from `docker compose up` on Linux/macOS/Windows
+- [ ] REQ-01 — Whole system runs from a fresh clone on Windows/Linux/macOS, Docker the only prerequisite
+- [ ] REQ-34 — Windows and Unix task runners stay at target parity, enforced in CI
+- [ ] REQ-35 — Deployment compose runs the built image, never host source
 - [ ] REQ-02 — Raw upstream payloads land immutably in bronze and parsing is replayable
 - [ ] REQ-03 — Daily Beatport chart snapshots captured without gaps
 - [ ] REQ-04 — Beatport catalog metadata (BPM, key, genre, label, credits, dates) ingested
@@ -90,7 +92,7 @@ release landscape — every other feature is replaceable, the history is not.
 ## Constraints
 
 - **Tech stack**: Python 3.12 + PostgreSQL 16 + dbt-core — owner's stated choice: Python for scraping/analysis, SQL for the warehouse
-- **Deployment**: Docker Compose only — must be system-agnostic; Docker is the sole host dependency
+- **Deployment**: Docker Compose only; Docker is the sole host dependency. Development happens on Windows, deployment targets Ubuntu 24.04 LTS — both are first-class and CI must cover both
 - **Scale**: single user, batch — no concurrency, HA, or throughput requirements
 - **Budget**: free sources only — no paid APIs or hosted services
 - **Legal**: personal research use; polite collection; no redistribution — third-party ToS
@@ -100,6 +102,9 @@ release landscape — every other feature is replaceable, the history is not.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
+| Develop and test on Windows, deploy to Ubuntu 24.04 LTS | Owner's stated workflow. Makes both platforms first-class rather than one being a fallback, and means the container base already matches the deployment target exactly | ✓ Owner-confirmed |
+| Two task runners (`Makefile` + `make.ps1`) rather than requiring WSL on Windows | Docker Desktop is the only prerequisite on either platform. The cost is a place drift can hide, paid for by a CI parity check that fails the build on divergence | ✓ Owner-requested |
+| compose split into base (deploy) + override (dev) | Compose auto-applies the override locally for live source; deployment uses `-f compose.yaml` so the container runs the image that was built and tested, not whatever is in the host's src/ | ✓ Follows from the Windows-dev/Ubuntu-deploy split |
 | Container base is `ubuntu:24.04`, not `python:3.12-slim` | Ubuntu 24.04 ships CPython 3.12 in main, so container and Ubuntu host share interpreter build, glibc and OpenSSL. Removes a whole class of build/runtime divergence | ✓ Owner-requested |
 | PostgreSQL as system of record, DuckDB for ad-hoc | Postgres suits incremental idempotent upserts; DuckDB is better for exploratory scans over Parquet exports | — Pending |
 | dbt-core for silver→gold | Owner wants SQL-centric analytics; gives tests, lineage and cheap redefinition of derived metrics | — Pending |
