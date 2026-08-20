@@ -195,9 +195,13 @@ catalog and public playlist reads). Requires registering a developer app.
 
 **Playlists to track**
 
-`mint` is named by the owner. The rest of the list is an open question — see
-`.planning/PROJECT.md`. Candidates: Spotify's dance/electronic editorial
-playlists, plus any that behave like charts rather than mood collections.
+**v1 tracks `mint` and nothing else** (owner, 2026-08-20). Additional playlist
+pipes are additive and can be built later — the only cost of deferring them is
+that their history starts later.
+
+Consequence worth stating plainly: with a single playlist, the Spotify chart
+signal is all-or-nothing. If editorial access is unavailable, there is no
+degraded Spotify chart signal — there is none at all.
 
 ⚠️ **Verify before building on this.** The same November 2024 change that
 removed audio-features also **restricted access to Spotify-owned editorial
@@ -278,7 +282,7 @@ visible.
 | 2 | **Deezer** | Free, unauthenticated `bpm` on the track object — the main independent check |
 | 3 | **AcousticBrainz dump** | Collection stopped in 2022, but the historical dump is still downloadable and MBID-keyed. Static lookup, zero request cost. Verify current availability before relying on it |
 | 4 | **MusicBrainz / Discogs** | Sparse for tempo; useful mainly via linked data |
-| 5 | **Local audio analysis** (Essentia/librosa) | Only true ground truth. Owner's own files only. Deferred |
+| ~~5~~ | ~~Local audio analysis (Essentia/librosa)~~ | **Out of scope (owner, 2026-08-20)** — no personal library exists. This project is forecasting intelligence, not library management |
 
 Rules:
 

@@ -204,8 +204,9 @@ Full detail in `docs/DOMAIN.md`. The load-bearing ones:
 - **BPM has a resolution ladder, not a single source.** Beatport first, Deezer
   second, then AcousticBrainz dump / linked data, then local audio analysis.
   Record `bpm_source` and `bpm_confidence` on every value. Never average across
-  sources — half/double-time ambiguity makes the average meaningless. See
-  `docs/DATA-SOURCES.md`.
+  sources — half/double-time ambiguity makes the average meaningless. There is
+  **no ground-truth corpus**, so cross-source disagreement is the only quality
+  signal that will ever exist: preserve it. See `docs/DATA-SOURCES.md`.
 - **Spotify is metadata and playlist charts only — never tempo or key.** The
   `audio-features` / `audio-analysis` endpoints are deprecated for new apps.
   Reading a Spotify tempo field is a defect, and CI greps for it.
@@ -230,7 +231,7 @@ Detail, field lists, and limits live in `docs/DATA-SOURCES.md`. Summary:
 | **Spotify** | OAuth client credentials | Playlist/chart membership (`mint` + other dance charts), ISRC, popularity, release metadata | Second chart population (streaming vs DJ-purchase). ⚠️ `audio-features`/`audio-analysis` **deprecated for new apps Nov 2024** — never take tempo or key from Spotify. Editorial-playlist access is also restricted for new apps; verify in `04-04` |
 | **Traxsource / Juno** | HTML | House/techno coverage Beatport under-represents | Optional, later phase |
 | **1001Tracklists** | No API, aggressive anti-bot | What DJs actually play | Out of scope for now; revisit only if a sanctioned route appears |
-| **Local audio (Essentia/librosa)** | Owner's own files | Ground-truth BPM/key for validation | Optional; the only way to audit vendor key accuracy |
+| ~~Local audio (Essentia/librosa)~~ | — | — | **Out of scope** — no personal library. Vendor BPM/key can never be audited against ground truth; cross-source disagreement is the only quality signal |
 
 ### Legal & ethical posture — binding
 
@@ -377,8 +378,9 @@ files directly and follow them by hand.
 emeye is licensed **AGPL-3.0-or-later** (decided by the owner, 2026-08-20).
 The Streamlit surface makes this network-deployable, so a plain GPL would leave
 the hosted-service loophole open; AGPL closes it, keeps Essentia (AGPL-3.0)
-usable for the deferred audio ground-truth work, and its obligations are
-well-understood rather than bespoke.
+well-understood rather than bespoke. (The original secondary argument — keeping
+Essentia (AGPL-3.0) available — no longer applies now that local audio analysis
+is out of scope, but the network-deployment argument stands on its own.)
 
 `pyproject.toml` carries no license metadata until plan `01-04` applies it —
 that plan writes all four surfaces in one pass so nothing ever disagrees.

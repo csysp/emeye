@@ -41,7 +41,7 @@ release landscape — every other feature is replaceable, the history is not.
 - [ ] REQ-17 — Scheduled, idempotent, individually re-runnable jobs
 - [ ] REQ-18 — Collectors are polite: robots.txt, rate limits, honest UA, opt-in gating
 - [ ] REQ-19 — `emeye status` surfaces ingest health from `ingest_run`
-- [ ] REQ-20 — `emeye backup` produces a restorable warehouse dump
+- [ ] REQ-20 — `emeye backup` produces a single portable file for manual offline copy, and `emeye restore` provably reloads it
 - [ ] REQ-30 — Repository carries a strong protective (copyleft) license, applied consistently
 - [ ] REQ-31 — Runtime dependencies are license-compatible with that choice, checked in CI
 - [ ] REQ-32 — Spotify supplies chart/playlist membership and metadata via the official API
@@ -77,8 +77,11 @@ release landscape — every other feature is replaceable, the history is not.
 - **Every vendor taxonomy drifts.** Beatport has repeatedly split and renamed
   genres; a series keyed on the vendor string breaks at each rename and the
   break looks like a trend. Handled via a versioned genre dimension + crosswalk.
-- **Vendor key/BPM detection is algorithmic and imperfect.** Local audio
-  analysis of owned files is the only available ground truth.
+- **Vendor key/BPM detection is algorithmic and imperfect, and we have no ground
+  truth.** There is no personal library to analyze, so local audio analysis is
+  out of scope. Cross-source disagreement (Beatport vs Deezer) is therefore the
+  *only* quality signal available — which makes retaining disagreement rather
+  than averaging it away load-bearing, not merely tidy.
 - Development method is GSD Core, vendored untracked at `gsd-core/`.
 
 ## Constraints
@@ -108,25 +111,33 @@ release landscape — every other feature is replaceable, the history is not.
 | Genre taxonomy work deferred | With charts-only scope, genre is a per-track attribute rather than a modelling backbone; SCD2 + crosswalk is machinery the v1 questions do not need | ✓ Owner-confirmed |
 | Spotify excluded as a tempo/key source, included as a metadata/chart source | `audio-features` deprecated for new apps Nov 2024, so tempo never comes from Spotify — but playlist membership, ISRC, release metadata and popularity are still valuable | ✓ Owner-confirmed |
 | Spotify dance playlists/charts tracked as a second chart signal | Beatport charts what the DJ-purchase market buys; Spotify charts what the streaming audience plays. Two different populations, both worth a snapshot | ✓ Owner-confirmed |
+| `mint` is the only Spotify playlist in v1 | One pipe, built well, proves the pattern; further playlists are additive and cost nothing to add later except their own start date | ✓ Owner-confirmed |
+| Bronze payloads retained indefinitely, no pruning | Collection volume is a trickle by design (~2 chart docs + a handful of detail docs per day), so indefinite retention costs single-digit GB over a decade. Replayability is worth far more than the disk | ✓ Owner-confirmed |
+| Backup is manual to removable media | Single-user local-first tool; an automated offsite target would contradict the no-cloud constraint. `emeye backup` makes the file, the human moves it | ✓ Owner-confirmed |
+| No local audio analysis / no ground-truth corpus | No personal library to draw on; this is forecasting intelligence, not library management. Essentia and librosa drop out of the stack | ✓ Owner-confirmed |
 | **AGPL-3.0-or-later** | Chosen by the owner. The Streamlit surface makes this network-deployable, so a plain GPL would leave the hosted-service loophole open; AGPL closes it, keeps Essentia (AGPL-3.0) available for the deferred audio ground-truth work, and stays compatible with the MIT/BSD/Apache-2.0 stack | ✓ Decided 2026-08-20 |
 | Store keys as (tonic_pc, mode), render Camelot on read | Enharmonic spellings otherwise split one key into phantom duplicates | — Pending |
 | Genre modelled as SCD2 + canonical crosswalk | ~~Vendor taxonomy renames otherwise fabricate false trend breaks~~ Superseded: charts-only scope removes the need; genre stays a plain attribute | ✗ Dropped for v1 |
 
 ## Open Questions
 
-Resolved 2026-08-20: genre scope (charts-only, taxonomy deferred), Beatport API
-access (none — minimal scraping), license (AGPL-3.0-or-later), Spotify's role
-(metadata + playlist charts, never tempo).
+**All resolved as of 2026-08-20.** Recorded here so the answers are not
+relitigated later:
 
-1. **Spotify app credentials** — is there a Spotify account available to register
-   a developer app for client-credentials access?
-2. **Which Spotify playlists exactly** — `mint` is named; which others? And see
-   the editorial-playlist access risk in `docs/DATA-SOURCES.md` before committing.
-3. **Personal library / DJ history** — is there a local collection or play history
-   to fold in as BPM/key ground truth?
-4. **Discogs / Last.fm tokens** — accounts available?
-5. **Bronze retention** — keep payloads forever, or compress and prune after N months?
-6. **Backup target** — external disk, or none?
+| Question | Answer |
+|---|---|
+| Genre scope for v1 | Charts-only; versioned taxonomy deferred |
+| Beatport API access | None pursued — minimal collection on chart reset |
+| License | AGPL-3.0-or-later |
+| Spotify credentials | Dev account available; app registered when `04-04` needs it |
+| Spotify playlists | **`mint` only** for v1; additional playlist pipes are a later, additive phase |
+| Personal library / DJ history | **None** — this is intelligence gathering for forecasting, not library management. Local audio ground truth is out of scope |
+| Discogs / Last.fm tokens | Accounts available |
+| Bronze retention | **Keep payloads indefinitely** — no pruning, no TTL |
+| Postgres backup | **Manual, to a thumb drive** — `emeye backup` produces a portable file the owner copies by hand. No automation, no cloud |
+
+New questions arising from these answers are tracked in STATE.md rather than
+reopened here.
 
 ---
-*Last updated: 2026-08-20 — owner decisions on license, Beatport posture, Spotify role and chart scope*
+*Last updated: 2026-08-20 — all open questions resolved; Phase 1 wave 1 executing*

@@ -31,7 +31,7 @@ being renumbered or deleted.
 |---|---|---|---|
 | REQ-17 | All jobs are scheduled, idempotent, and individually re-runnable | 2, 3 | Running any job twice for the same date changes no row counts |
 | REQ-19 | `emeye status` surfaces ingest health from `ingest_run` | 2 | Shows last run, counts, duration, cache hit rate, errors per source |
-| REQ-20 | `emeye backup` produces a restorable warehouse dump | 8 | Dump restores into an empty Postgres and marts rebuild |
+| REQ-20 | `emeye backup` writes a single portable, compressed dump for manual offline copy; `emeye restore` reloads it into an empty database | 8 | A dump taken on one machine restores cleanly on another and the restored warehouse matches row-for-row |
 | REQ-21 | Ingest failures are recorded and never corrupt silver | 2 | Silver derives only from complete bronze rows; a failed run leaves silver unchanged |
 | REQ-22 | Storage growth is bounded by an explicit, configurable retention policy | 8 | Retention is a documented config value, never a silent default |
 

@@ -22,7 +22,7 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 
 Phase: 1 of 8 (Foundation)
 Plan: 0 of 4 in current phase
-Status: Planned — HOLDING for owner review of the six open questions
+Status: Executing wave 1 (`01-01` + `01-04`)
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 1:**
@@ -33,8 +33,8 @@ Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license
 The license checkpoint in `01-04` is **resolved** — AGPL-3.0-or-later. All four
 plans are now autonomous.
 
-⛔ **Execution is on hold at the owner's instruction** until the six open
-questions in `PROJECT.md` have been reviewed. Do not start wave 1 before then.
+All six open questions were answered 2026-08-20 (see PROJECT.md). Wave 1 is
+executing.
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -70,6 +70,10 @@ affecting current work:
 - [Owner, 2026-08-20]: Beatport is the primary BPM origin but not the source of truth — cross-referenced, disagreement retained
 - [Owner, 2026-08-20]: Spotify is a metadata + playlist-chart source via the official API; never tempo or key
 - [Owner, 2026-08-20]: Genre taxonomy work dropped for v1 — charts-only scope makes the crosswalk unnecessary
+- [Owner, 2026-08-20]: Spotify v1 tracks `mint` only; further playlists are additive later
+- [Owner, 2026-08-20]: No personal library — no local audio analysis, no ground truth, Essentia/librosa out of the stack
+- [Owner, 2026-08-20]: Bronze payloads kept indefinitely; no pruning or TTL
+- [Owner, 2026-08-20]: Postgres backup is manual to a thumb drive — `emeye backup` makes the file, the human moves it
 - [Phase 1 planning]: Source enable flags default to False, so merging a collector never starts collection
 - [Phase 1 planning]: Tests run with outbound networking blocked at the socket layer, not by convention
 
@@ -93,8 +97,24 @@ None yet.
   API changes restricted Spotify-owned editorial playlists (`mint` among them)
   for new apps. Plan `04-04` must verify against a real app registration before
   any playlist design is committed. Fallbacks are documented in DATA-SOURCES.md.
-- **Six open questions remain** in PROJECT.md (Spotify credentials, playlist
-  list, personal library, Discogs/Last.fm tokens, bronze retention, backup).
+- **No ground-truth BPM/key corpus exists.** With no personal library, vendor
+  values can never be audited against reality. Cross-source disagreement
+  (Beatport vs Deezer) is the only quality signal we will ever have — so
+  retaining disagreement instead of averaging it is load-bearing. Essentia and
+  librosa drop out of the stack entirely, which also removes one of the two
+  original arguments for AGPL; the network-deployment argument still stands on
+  its own and the decision is unchanged.
+- **`mint` is a single point of failure for the Spotify chart signal.** With
+  only one playlist tracked, if editorial-playlist access turns out to be
+  unavailable to a new app, there is no Spotify chart signal at all — not a
+  degraded one. `04-04` must verify access *before* building the connector, not
+  after.
+- **Bronze grows forever by decision.** At the designed trickle (~2 chart docs
+  plus a handful of detail docs per day) this is single-digit GB over a decade,
+  so it is comfortably affordable — but nothing may quietly raise that rate
+  without revisiting the choice.
+- **Backups are manual and therefore forgettable.** `emeye status` must surface
+  days-since-last-backup so the gap is visible before it matters.
 
 ## Deferred Items
 
@@ -110,5 +130,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-08-20 — Phase 1 planning complete.
-Next step: **Owner reviews the six open questions in PROJECT.md.** On their word,
-execute Phase 1 wave 1 (`01-01` and `01-04` in parallel) — both now autonomous.
+Next step: Wave 1 (`01-01` Python project, `01-04` licensing), then wave 2
+(`01-02` container stack), then wave 3 (`01-03` quality gates + CI).
