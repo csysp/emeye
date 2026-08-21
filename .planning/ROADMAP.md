@@ -16,7 +16,7 @@ operational bits that keep a decade-long dataset alive.
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Foundation** - Licensing, Docker Compose warehouse, CLI skeleton, migrations, CI
+- [x] **Phase 1: Foundation** - Licensing, Docker Compose warehouse, CLI skeleton, migrations, CI
 - [ ] **Phase 2: Ingestion Framework** - Bronze store, polite HTTP layer, run tracking, idempotent jobs
 - [ ] **Phase 3: Beatport Connector** - Catalog + daily chart snapshots landing in bronze and silver
 - [ ] **Phase 4: Open-Data Enrichment** - MusicBrainz, Discogs, Deezer, Last.fm/ListenBrainz + entity resolution
@@ -182,7 +182,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 4/4 | Complete — container stack verified end to end | 2026-08-21 |
+| 1. Foundation | 4/4 | ✅ Complete — verified on Windows and CI-green | 2026-08-21 |
 | 2. Ingestion Framework | 0/3 | Not started | - |
 | 3. Beatport Connector | 0/4 | Not started | - |
 | 4. Open-Data Enrichment | 0/5 | Not started | - |

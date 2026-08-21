@@ -1,7 +1,7 @@
 # Plan 01-03 — Quality Gates & CI — Summary
 
 **Completed:** 2026-08-21
-**Status:** ✅ Host-verified · ⚠️ container path unverified (sandbox cannot pull images)
+**Status:** ✅ Complete — verified on the host, in the container on Windows, and in CI
 
 ## What was built
 
@@ -68,25 +68,27 @@ because the logging tests captured no output. Fixed with `force=True`.
 This is the third defect in this phase that only surfaced by running the thing
 rather than reading it.
 
-## NOT verified
+## Container and CI verification — PASSED
 
-The container path — `make test`, `make lint`, and the `dev` image stage — has
-never been executed. The sandbox cannot pull base images. Needs one run on the
-owner's machine:
+Owner's machine, 2026-08-21: `.\make.ps1 lint` clean (ruff, format, mypy on 26
+files), `.\make.ps1 test` 52 passed, `.\make.ps1 test-integration` 5 passed.
 
-```powershell
-.\make.ps1 lint
-.\make.ps1 test
-.\make.ps1 up; .\make.ps1 migrate; .\make.ps1 test-integration
-```
+GitHub Actions run #5 (`41bbc24`) — **all five jobs green**:
 
-The Python side is fully exercised on the host; what is untested is whether the
-`dev` stage builds and whether the bind mounts line up inside the container.
+| Job | Result |
+|---|---|
+| lint (ruff + mypy) | ✅ via `make lint` |
+| unit tests | ✅ via `make test` |
+| integration tests | ✅ `make up` → `make migrate` → `make test-integration` |
+| compliance | ✅ licenses, payloads, parity, Spotify grep, SPDX headers |
+| container build + deploy config | ✅ image builds, REQ-35 holds, CLI runs in the image |
+
+CI earned its keep immediately: run #4 failed on the three container-path test
+failures **before** the owner hit them locally. The `make`-based design meant CI
+was exercising the same code path a developer does, which is exactly what REQ-29
+was for.
 
 ## Carried forward
-
-- CI has never run; the first push to a branch with the workflow will be its
-  first execution.
 - Coverage is measured but no threshold is enforced. A number is worth setting
   once there is real parsing code in phase 3 — enforcing one now would just be
   a ratchet on trivial code.
