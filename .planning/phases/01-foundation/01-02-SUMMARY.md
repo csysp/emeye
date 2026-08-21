@@ -1,7 +1,7 @@
 # Plan 01-02 — Container Stack — Summary
 
 **Completed:** 2026-08-20
-**Status:** ⚠️ Built and statically verified; **runtime verification blocked by the environment**
+**Status:** ✅ Verified end to end on the owner's Windows machine, 2026-08-21
 
 ## Refactor from plan
 
@@ -59,43 +59,47 @@ Two design choices worth noting beyond the plan:
 | `bash -n docker/entrypoint.sh` | ✅ valid |
 | No Makefile target uses host python/uv/alembic/psql | ✅ all via `docker compose` |
 
-## NOT verified — environment limitation
+## Runtime verification — PASSED on Windows + Docker Desktop
 
-**The image was never built and the stack was never run.** This sandbox's
-network policy returns HTTP 403 for Docker Hub layer downloads
-(`production.cloudfront.docker.com`), so `ubuntu:24.04` and `postgres:16` cannot
-be pulled. A Docker daemon was started successfully; the block is on registry
-egress, not on Docker.
+Confirmed by the owner 2026-08-21, after two build defects were fixed (see
+below):
 
-Consequently these plan criteria remain **unproven**:
+| Check | Result |
+|---|---|
+| Image builds | ✅ all 33 build steps, both `runtime` and `dev` targets |
+| `docker compose up -d` | ✅ postgres healthy, app `Up` (no restart loop) |
+| `alembic upgrade head` | ✅ `Running upgrade -> 0001, initial schema_meta` |
+| `\dt` | ✅ `alembic_version` and `schema_meta` present |
+| `alembic downgrade -1` | ✅ clean |
+| Re-upgrade after downgrade | ✅ round-trips |
+| `down` then `up`, data survives | ✅ seed row intact with its original timestamp |
+| postgres logs | ✅ clean init, checkpoint, ready for connections |
+| app logs | ✅ empty — nothing to report is the correct output |
 
-- The image builds
-- `make up` yields a healthy postgres and a running app
-- `make migrate` applies `0001` against a live database
-- upgrade → downgrade → re-upgrade round-trips
-- Data survives `make down` && `make up`
-- `make psql` connects and `\dt` shows the tables
-- The fresh-clone portability walkthrough (plan Task 5)
+The `userdel`/`groupdel` step and `/data` volume ownership — the two risks
+flagged at plan time — both worked without intervention.
 
-The static checks above cover the wiring — the migration SQL, the settings
-integration, the compose topology and the Makefile are all confirmed correct.
-What is untested is the **image build itself**: apt package availability, the
-uv binary path in the `ghcr.io/astral-sh/uv` image, the `userdel -r ubuntu`
-step, and volume ownership behavior.
+## Build defects found by the real build
 
-**These must be run on the owner's Ubuntu machine before Phase 1 is closed:**
+Three, none of which static review had caught:
 
-```bash
-make up && make migrate && make psql   # then \dt
-make downgrade && make migrate         # round-trip
-make down && make up && make psql      # persistence
-```
+1. **`COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION}`** — BuildKit resolves
+   stage names at parse time and does not substitute ARGs in a `COPY --from`
+   image reference. Fixed by making uv its own `FROM ... AS uvbin` stage, which
+   does expand global ARGs.
+2. **GID 1000 collision** — anticipated at plan time and confirmed: `userdel`
+   does not reliably remove the user's primary group. Both user and group are
+   now cleared, by id rather than name.
+3. **CRLF entrypoint** — the predicted Windows failure, which `.gitattributes`
+   did **not** prevent. That file applies at checkout, so a clone made before it
+   existed keeps its CRLF copy through every later pull; git does not
+   re-normalize files already on disk. Now stripped during the build, with the
+   build asserting the shebang survived and `bash -n` parses the script, so a
+   malformed entrypoint fails the build rather than restart-looping at runtime.
 
-Risk assessment: moderate. The Dockerfile deliberately uses only well-trodden
-constructs and was simplified during this plan to shrink the untested surface —
-apt cache mounts and the `tini` package were both removed in favour of plainer
-alternatives. The most likely failure points are the `userdel` step and volume
-ownership, both of which fail loudly and visibly rather than subtly.
+Lesson worth keeping: every one of these was in the container build, the exact
+layer that could not be exercised without pulling base images. Static review
+caught the *design* issues; only running it caught these.
 
 ## Defect found and fixed
 

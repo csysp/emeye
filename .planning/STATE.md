@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 
 Phase: 1 of 8 (Foundation)
 Plan: 4 of 4 in current phase — all waves landed
-Status: Phase 1 code complete; closing out on owner-side container verification
+Status: Phase 1 COMPLETE — warehouse runs, migrations round-trip, data persists
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 1:**
 - Wave 1 (parallel): ✅ `01-01` Python project skeleton · ✅ `01-04` Licensing & governance
-- Wave 2: ⚠️ `01-02` Container stack — written, statically verified, **never built** (sandbox blocks Docker Hub)
+- Wave 2: ✅ `01-02` Container stack — built and verified end to end on Windows 2026-08-21
 - Wave 3: ✅ `01-03` Quality gates and CI — 55 tests, 5 CI jobs, all host-verified
 
 The license checkpoint in `01-04` is **resolved** — AGPL-3.0-or-later. All four
