@@ -20,12 +20,23 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 
 ## Current Position
 
-Phase: 1 of 8 (Foundation)
-Plan: 4 of 4 in current phase — all waves landed
-Status: Phase 1 COMPLETE and CI-green. Ready to discuss Phase 2.
+Phase: 2 of 8 (Ingestion Framework)
+Plan: 0 of 3 in current phase — planned, awaiting review
+Status: Phase 2 planned. Awaiting owner review before execution.
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
-**Execution waves for Phase 1:**
+**Execution waves for Phase 2:**
+- Wave 1 (parallel): `02-01` bronze schema + store · `02-02` polite HTTP layer
+- Wave 2: `02-03` job contract, runner, CLI, scheduler, the guarantee tests
+
+No checkpoints — all three plans are autonomous. Bronze storage was settled at
+the discuss step (JSONB), so nothing blocks.
+
+**Phase 2 decisions (owner, 2026-08-21):** JSONB payloads · synchronous httpx ·
+cron-in-container scheduler · `ingest_run` with a `skipped_cache` status ·
+robots.txt as a first-class fail-closed component.
+
+**Execution waves for Phase 1 (complete):**
 - Wave 1 (parallel): ✅ `01-01` Python project skeleton · ✅ `01-04` Licensing & governance
 - Wave 2: ✅ `01-02` Container stack — built and verified end to end on Windows 2026-08-21
 - Wave 3: ✅ `01-03` Quality gates and CI — 57 tests, 5 CI jobs, all green on GitHub Actions
@@ -130,9 +141,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-08-20 — Phase 1 planning complete.
-Next step: **Phase 2 — Ingestion Framework.** Discuss step first: bronze
-storage shape, ingest_run status model, HTTP client posture, scheduler
-mechanism. Then plan, then execute.
+Next step: owner reviews the three Phase 2 plans, then execute wave 1
+(`02-01` and `02-02` in parallel).
 
 **Wave 3 landed.** `check_licenses`, `check_no_payloads` and `check_task_parity`
 are all wired into CI. `make test` / `test-integration` / `lint` have real
