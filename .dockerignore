@@ -1,0 +1,50 @@
+# Keep the build context small and free of things the image must never see.
+#
+# .env is the important line: files in the context are uploaded to the Docker
+# daemon even when no COPY references them. Secrets have no business there.
+
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+.git
+.gitignore
+.gitattributes
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Data and exports are never baked into an image
+data/
+exports/
+*.parquet
+*.duckdb
+*.sqlite*
+*.dump
+*.sql.gz
+pgdata/
+
+# Planning and vendored tooling are not part of the runtime
+.planning/
+gsd-core/
+notebooks/
+tests/
+docs/
+.github/
+
+# Compose and task runners are host-side
+compose*.yaml
+Makefile
+make.ps1

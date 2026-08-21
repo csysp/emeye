@@ -16,11 +16,18 @@ ARG UBUNTU_VERSION=24.04
 ARG UV_VERSION=0.8.17
 ARG PYTHON=python3.12
 
+# ------------------------------------------------------------------ uv bin ----
+# uv arrives as its own stage rather than `COPY --from=ghcr.io/...:${UV_VERSION}`.
+# BuildKit resolves stage names at parse time and does NOT substitute an ARG
+# inside a COPY --from image reference — it fails with "invalid reference
+# format". FROM does expand global ARGs, so pinning the version here works and
+# keeps the version in one place.
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uvbin
+
 # ---------------------------------------------------------------- builder ----
 FROM ubuntu:${UBUNTU_VERSION} AS builder
 
 ARG PYTHON
-ARG UV_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
 
 # python3.12-venv is required for venv creation; it is a build-time need only.
@@ -30,7 +37,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION} /uv /usr/local/bin/uv
+COPY --from=uvbin /uv /usr/local/bin/uv
 
 # only-system pins uv to Ubuntu's interpreter. Without this uv may download its
 # own managed CPython, which would silently defeat the entire point of an
@@ -65,20 +72,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Ubuntu 24.04 ships a built-in 'ubuntu' account already holding UID 1000.
-# Removing it frees UID 1000 for our own user, which matters because a
-# single-user Linux desktop is almost always UID 1000 — matching it keeps
-# bind-mounted files writable without any host-side chown. Override at build
-# time with --build-arg APP_UID=... if the host user differs.
+# Ubuntu 24.04 ships a built-in 'ubuntu' account already holding UID 1000, and
+# a matching 'ubuntu' group at GID 1000. Both are cleared so our user can take
+# those ids, because a single-user Linux desktop is almost always 1000 and
+# matching it keeps bind-mounted files writable with no host-side chown.
+#
+# Clearing the group is not optional: userdel does not reliably remove the
+# user's primary group, and a leftover GID 1000 makes `groupadd -g 1000` fail
+# with "GID already exists". The lookups are by id rather than by name so this
+# still works if APP_UID/APP_GID are overridden onto some other occupied id.
 ARG APP_UID=1000
 ARG APP_GID=1000
-RUN userdel -r ubuntu 2>/dev/null || true; \
-    groupadd -g ${APP_GID} emeye && \
-    useradd -u ${APP_UID} -g ${APP_GID} -m -s /bin/bash emeye
+RUN set -eux; \
+    if getent passwd "${APP_UID}" >/dev/null; then \
+        userdel -r "$(getent passwd "${APP_UID}" | cut -d: -f1)" 2>/dev/null || true; \
+    fi; \
+    if getent group "${APP_GID}" >/dev/null; then \
+        groupdel "$(getent group "${APP_GID}" | cut -d: -f1)" 2>/dev/null || true; \
+    fi; \
+    groupadd -g "${APP_GID}" emeye; \
+    useradd -u "${APP_UID}" -g "${APP_GID}" -m -s /bin/bash emeye
 
 COPY --from=builder --chown=${APP_UID}:${APP_GID} /opt/venv /opt/venv
 COPY --from=builder --chown=${APP_UID}:${APP_GID} /app/src /app/src
 COPY --chown=${APP_UID}:${APP_GID} alembic.ini /app/alembic.ini
+# scripts/ is needed in the image because `make licenses` runs the checker
+# inside the container. That is the more meaningful place to run it: the
+# container venv holds the runtime dependency set (--no-dev), which is exactly
+# what ships.
+COPY --chown=${APP_UID}:${APP_GID} scripts /app/scripts
 COPY --chown=root:root docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 0755 /usr/local/bin/entrypoint.sh
 
