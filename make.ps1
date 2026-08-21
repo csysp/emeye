@@ -28,15 +28,22 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location -Path $PSScriptRoot
 
+# Arguments are passed as an explicit array, never as loose tokens.
+#
+# PowerShell binds parameters before a function body runs, so a bare `-e` in
+# `Invoke-Compose run --rm -e VAR=1 app` is read as a *PowerShell* parameter
+# name and fails as ambiguous with -ErrorAction/-ErrorVariable. Wrapping the
+# arguments in @( ... ) makes them data rather than syntax. The parameter is
+# also not named $Args, which is an automatic variable.
 function Invoke-Compose {
-    param([Parameter(ValueFromRemainingArguments)] [string[]]$Args)
-    & docker compose @Args
+    param([string[]]$ComposeArgs)
+    & docker compose @ComposeArgs
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
 function Invoke-App {
-    param([Parameter(ValueFromRemainingArguments)] [string[]]$Args)
-    Invoke-Compose run --rm app @Args
+    param([string[]]$AppArgs)
+    Invoke-Compose (@('run', '--rm', 'app') + $AppArgs)
 }
 
 function Assert-Env {
@@ -96,8 +103,8 @@ function Show-Help {
 function Invoke-AppNoDb {
     # EMEYE_WAIT_FOR_DB=0 skips the entrypoint's postgres wait: these need the
     # image, not the database, and would otherwise block for the full timeout.
-    param([Parameter(ValueFromRemainingArguments)] [string[]]$Args)
-    Invoke-Compose run --rm -e EMEYE_WAIT_FOR_DB=0 app @Args
+    param([string[]]$AppArgs)
+    Invoke-Compose (@('run', '--rm', '-e', 'EMEYE_WAIT_FOR_DB=0', 'app') + $AppArgs)
 }
 
 switch ($Target.ToLower()) {
@@ -105,16 +112,16 @@ switch ($Target.ToLower()) {
 
     'up' {
         Assert-Env
-        Invoke-Compose up -d --build
+        Invoke-Compose @('up', '-d', '--build')
         Write-Host 'up. next: .\make.ps1 migrate'
     }
 
-    'down'  { Invoke-Compose down }
-    'build' { Assert-Env; Invoke-Compose build }
-    'ps'    { Invoke-Compose ps }
-    'logs'  { Invoke-Compose logs -f }
+    'down'  { Invoke-Compose @('down') }
+    'build' { Assert-Env; Invoke-Compose @('build') }
+    'ps'    { Invoke-Compose @('ps') }
+    'logs'  { Invoke-Compose @('logs', '-f') }
 
-    'migrate' { Assert-Env; Invoke-App alembic upgrade head }
+    'migrate' { Assert-Env; Invoke-App @('alembic', 'upgrade', 'head') }
 
     'revision' {
         Assert-Env
@@ -122,40 +129,40 @@ switch ($Target.ToLower()) {
             Write-Error 'usage: .\make.ps1 revision -m "message"'
             exit 1
         }
-        Invoke-App alembic revision --autogenerate -m $Message
+        Invoke-App @('alembic', 'revision', '--autogenerate', '-m', $Message)
     }
 
-    'downgrade' { Assert-Env; Invoke-App alembic downgrade -1 }
+    'downgrade' { Assert-Env; Invoke-App @('alembic', 'downgrade', '-1') }
 
-    'shell' { Assert-Env; Invoke-Compose exec app bash }
+    'shell' { Assert-Env; Invoke-Compose @('exec', 'app', 'bash') }
 
     'psql' {
         Assert-Env
         $user = Get-EnvValue 'EMEYE_POSTGRES_USER' 'emeye'
         $db   = Get-EnvValue 'EMEYE_POSTGRES_DB'   'emeye'
-        Invoke-Compose exec postgres psql -U $user -d $db
+        Invoke-Compose @('exec', 'postgres', 'psql', '-U', $user, '-d', $db)
     }
 
-    'licenses' { Assert-Env; Invoke-App python scripts/check_licenses.py }
+    'licenses' { Assert-Env; Invoke-App @('python', 'scripts/check_licenses.py') }
 
-    'test' { Assert-Env; Invoke-AppNoDb pytest -m unit }
+    'test' { Assert-Env; Invoke-AppNoDb @('pytest', '-m', 'unit') }
 
-    'test-integration' { Assert-Env; Invoke-App pytest -m integration }
+    'test-integration' { Assert-Env; Invoke-App @('pytest', '-m', 'integration') }
 
     'lint' {
         Assert-Env
-        Invoke-AppNoDb ruff check .
-        Invoke-AppNoDb ruff format --check .
-        Invoke-AppNoDb mypy
+        Invoke-AppNoDb @('ruff', 'check', '.')
+        Invoke-AppNoDb @('ruff', 'format', '--check', '.')
+        Invoke-AppNoDb @('mypy')
     }
 
-    'clean' { Invoke-Compose down --rmi local }
+    'clean' { Invoke-Compose @('down', '--rmi', 'local') }
 
     'nuke' {
         Write-Host 'This deletes the warehouse volume permanently.'
         $answer = Read-Host "Type 'nuke' to confirm"
         if ($answer -ne 'nuke') { Write-Host 'aborted'; exit 1 }
-        Invoke-Compose down -v --rmi local
+        Invoke-Compose @('down', '-v', '--rmi', 'local')
     }
 
     default {

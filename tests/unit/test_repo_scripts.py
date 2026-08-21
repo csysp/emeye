@@ -78,3 +78,37 @@ def test_task_parity_holds_for_the_real_runners() -> None:
     make_text = (SCRIPTS.parent / "Makefile").read_text(encoding="utf-8")
     ps_text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
     assert mod.makefile_targets(make_text) == mod.powershell_targets(ps_text)
+
+
+def test_powershell_helpers_are_called_with_arrays() -> None:
+    """Guard against PowerShell parameter binding eating docker flags.
+
+    PowerShell binds parameters before a function body runs, so a bare `-e` in
+    `Invoke-Compose run --rm -e VAR=1 app` is parsed as a PowerShell parameter
+    name and fails as ambiguous with -ErrorAction/-ErrorVariable. Passing an
+    explicit @( ... ) array makes the arguments data rather than syntax.
+
+    This cannot be caught by running the script here — there is no pwsh in CI —
+    so it is enforced structurally instead.
+    """
+    import re
+
+    text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
+    offenders: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#") or stripped.startswith("function "):
+            continue
+        match = re.search(r"\bInvoke-(?:Compose|App|AppNoDb)\s+(\S)", stripped)
+        if match and match.group(1) not in {"@", "("}:
+            offenders.append(stripped)
+
+    assert not offenders, "helper called with loose tokens instead of an array:\n" + "\n".join(
+        offenders
+    )
+
+
+def test_powershell_does_not_shadow_the_args_automatic_variable() -> None:
+    """$Args is an automatic variable; a param named $Args is a latent bug."""
+    text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
+    assert "[string[]]$Args" not in text
