@@ -41,7 +41,12 @@ def configure_logging(settings: Settings) -> None:
 
     level = getattr(logging, str(settings.log_level).upper(), logging.INFO)
 
-    logging.basicConfig(format="%(message)s", stream=sys.stderr, level=level)
+    # force=True is load-bearing: basicConfig is a no-op when the root logger
+    # already has handlers, so without it this function silently does nothing
+    # whenever anything else configured logging first (pytest, a library, an
+    # embedding host) — and the app would log at the wrong level, to the wrong
+    # stream, in the wrong format, with no error to show for it.
+    logging.basicConfig(format="%(message)s", stream=sys.stderr, level=level, force=True)
 
     structlog.configure(
         processors=[

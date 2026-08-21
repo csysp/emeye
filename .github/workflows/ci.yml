@@ -1,0 +1,119 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# CI runs the same Makefile targets a developer runs. The moment CI grows its
+# own command list, "green locally" and "green in CI" stop meaning the same
+# thing — which is the entire point of REQ-29.
+#
+# lint/test/integration therefore go through `make`, which runs them inside the
+# container. The compliance job's repo-hygiene checks are the exception: they
+# inspect the git repository rather than the code, so they run on the runner
+# with stdlib Python and are mirrored by pre-commit locally.
+
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint (ruff + mypy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed .env
+        run: cp .env.example .env
+      - name: make lint
+        run: make lint
+
+  test:
+    name: unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed .env
+        run: cp .env.example .env
+      - name: make test
+        run: make test
+
+  integration:
+    name: integration tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed .env
+        run: cp .env.example .env
+      - name: make up
+        run: make up
+      - name: make migrate
+        run: make migrate
+      - name: make test-integration
+        run: make test-integration
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  compliance:
+    name: compliance (licenses, payloads, parity)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed .env
+        run: cp .env.example .env
+
+      # Runs in the container: its venv holds the --no-dev runtime dependency
+      # set, which is what actually ships.
+      - name: Dependency licenses compatible with AGPL-3.0-or-later
+        run: make licenses
+
+      # These inspect the git repository rather than the code, so they run on
+      # the runner. They are stdlib-only and need no environment. pre-commit
+      # runs the same scripts locally.
+      - name: No secrets, payloads or oversized files
+        run: python3 scripts/check_no_payloads.py --all
+
+      - name: Task runners at parity (REQ-34)
+        run: python3 scripts/check_task_parity.py
+
+      - name: No tempo or key sourced from Spotify
+        run: |
+          if grep -rniE "audio_features|audio-features|audio-analysis" src/ tests/; then
+            echo "Spotify audio-features is deprecated for new apps; tempo and key must never come from it."
+            exit 1
+          fi
+          echo "OK"
+
+      - name: License headers present on every source file
+        run: |
+          missing=$(grep -rL "SPDX-License-Identifier: AGPL-3.0-or-later" \
+            --include="*.py" src/ scripts/ tests/ || true)
+          if [ -n "$missing" ]; then echo "missing SPDX header:"; echo "$missing"; exit 1; fi
+          echo "OK"
+
+  build:
+    name: container build + deploy config
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build runtime image
+        run: docker build -f docker/Dockerfile --target runtime -t emeye:ci .
+
+      - name: Deployment compose must not bind-mount source (REQ-35)
+        run: |
+          if docker compose -f compose.yaml config | grep -q "/app/src"; then
+            echo "compose.yaml bind-mounts src/ — deployment would run host files, not the built image."
+            exit 1
+          fi
+          echo "OK"
+
+      - name: CLI runs in the built image
+        run: docker run --rm -e EMEYE_WAIT_FOR_DB=0 emeye:ci emeye --version

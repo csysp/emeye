@@ -96,13 +96,26 @@ RUN set -eux; \
 COPY --from=builder --chown=${APP_UID}:${APP_GID} /opt/venv /opt/venv
 COPY --from=builder --chown=${APP_UID}:${APP_GID} /app/src /app/src
 COPY --chown=${APP_UID}:${APP_GID} alembic.ini /app/alembic.ini
+# Tool configuration lives in pyproject.toml, and pytest/ruff/mypy resolve it
+# from the working directory. Without this they silently fall back to defaults
+# inside the container — a different lint than the one CI claims to run.
+COPY --chown=${APP_UID}:${APP_GID} pyproject.toml /app/pyproject.toml
 # scripts/ is needed in the image because `make licenses` runs the checker
 # inside the container. That is the more meaningful place to run it: the
 # container venv holds the runtime dependency set (--no-dev), which is exactly
 # what ships.
 COPY --chown=${APP_UID}:${APP_GID} scripts /app/scripts
 COPY --chown=root:root docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod 0755 /usr/local/bin/entrypoint.sh
+# Strip CR before chmod. .gitattributes keeps this file LF on a fresh checkout,
+# but it only applies at checkout time — a clone made before that file existed
+# keeps its CRLF copy through every subsequent pull. A CRLF shebang fails as
+# "/usr/bin/env: 'bash\r': No such file or directory", which reads as a missing
+# interpreter rather than a line-ending problem. Normalizing here means the
+# image is correct regardless of the state of the host's working tree.
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
+    && chmod 0755 /usr/local/bin/entrypoint.sh \
+    && head -c 2 /usr/local/bin/entrypoint.sh | grep -q '#!' \
+    && bash -n /usr/local/bin/entrypoint.sh
 
 # A fresh named volume inherits ownership from the image's directory, so
 # chowning here is what makes /data writable to a non-root container user.
@@ -121,3 +134,24 @@ USER emeye
 # tini package, which keeps this image dependent only on Ubuntu's main archive.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["emeye", "--help"]
+
+# -------------------------------------------------------------------- dev ----
+# Development image: the runtime plus the dev dependency group, so `make test`
+# and `make lint` run in a container and Docker stays the only host requirement.
+#
+# This is a separate stage, not an extra layer on runtime, so the deployed image
+# never carries pytest, ruff or mypy.
+
+FROM builder AS builder-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
+
+FROM runtime AS dev
+ARG APP_UID=1000
+ARG APP_GID=1000
+USER root
+COPY --from=builder-dev --chown=${APP_UID}:${APP_GID} /opt/venv /opt/venv
+USER emeye
+# Tests are bind-mounted by compose.override.yaml rather than baked in, so a
+# test edit does not require a rebuild.
+CMD ["pytest"]

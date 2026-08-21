@@ -23,7 +23,7 @@ x-app-base: &app-base
       UBUNTU_VERSION: "24.04"
       APP_UID: "${EMEYE_UID:-1000}"
       APP_GID: "${EMEYE_GID:-1000}"
-  image: emeye:dev
+  image: emeye:latest
   init: true          # PID-1 signal handling and zombie reaping
   env_file: .env
   environment:

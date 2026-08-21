@@ -81,9 +81,9 @@ function Show-Help {
         'logs'             = 'Follow container logs'
         'ps'               = 'Show container status'
         'licenses'         = 'Check dependency license compatibility'
-        'test'             = 'Run unit tests (implemented in plan 01-03)'
-        'test-integration' = 'Run integration tests (implemented in plan 01-03)'
-        'lint'             = 'Run ruff and mypy (implemented in plan 01-03)'
+        'test'             = 'Run unit tests (no services, outbound network blocked)'
+        'test-integration' = 'Run integration tests (needs a running postgres)'
+        'lint'             = 'Run ruff and mypy'
         'clean'            = 'Remove containers and the app image, keep the database volume'
         'nuke'             = 'Remove containers AND all data volumes. Destroys the warehouse.'
     }
@@ -93,10 +93,11 @@ function Show-Help {
     Write-Host ''
 }
 
-function Invoke-NotWired {
-    param([string]$What)
-    Write-Error "$What not wired yet — plan 01-03 owns the test harness"
-    exit 2
+function Invoke-AppNoDb {
+    # EMEYE_WAIT_FOR_DB=0 skips the entrypoint's postgres wait: these need the
+    # image, not the database, and would otherwise block for the full timeout.
+    param([Parameter(ValueFromRemainingArguments)] [string[]]$Args)
+    Invoke-Compose run --rm -e EMEYE_WAIT_FOR_DB=0 app @Args
 }
 
 switch ($Target.ToLower()) {
@@ -137,9 +138,16 @@ switch ($Target.ToLower()) {
 
     'licenses' { Assert-Env; Invoke-App python scripts/check_licenses.py }
 
-    'test'             { Invoke-NotWired 'test' }
-    'test-integration' { Invoke-NotWired 'test-integration' }
-    'lint'             { Invoke-NotWired 'lint' }
+    'test' { Assert-Env; Invoke-AppNoDb pytest -m unit }
+
+    'test-integration' { Assert-Env; Invoke-App pytest -m integration }
+
+    'lint' {
+        Assert-Env
+        Invoke-AppNoDb ruff check .
+        Invoke-AppNoDb ruff format --check .
+        Invoke-AppNoDb mypy
+    }
 
     'clean' { Invoke-Compose down --rmi local }
 

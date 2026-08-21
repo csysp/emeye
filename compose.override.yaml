@@ -12,9 +12,17 @@
 
 services:
   app:
+    # Build the dev target so pytest/ruff/mypy are present. The deployment
+    # definition (compose.yaml alone) builds `runtime`, which has neither.
+    build:
+      target: dev
+    image: emeye:dev
     volumes:
       # Live source. Read-write because `make revision` / `.\make.ps1 revision`
       # writes generated migrations back into src/.
       - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts:ro
       - ./alembic.ini:/app/alembic.ini:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
       - emeye-data:/data

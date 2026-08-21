@@ -42,3 +42,81 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/emeye"]
+
+# ---------------------------------------------------------------------- ruff --
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # isort
+    "B",         # bugbear
+    "C4",        # comprehensions
+    "UP",        # pyupgrade
+    "DTZ",       # flake8-datetimez — naive datetimes in a time-series warehouse
+                 # produce silent, hard-to-trace errors
+    "S",         # bandit — basic security lints
+    "SIM",       # simplify
+    "ARG",       # unused arguments
+    "PTH",       # prefer pathlib
+    "RUF",
+]
+ignore = [
+    "E501",      # line length is enforced by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert; that is their job.
+"tests/**/*.py" = ["S101"]
+# Alembic generates this shape; revision identifiers are not constants.
+"src/emeye/db/alembic/versions/*.py" = ["N806"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["emeye"]
+
+# ---------------------------------------------------------------------- mypy --
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+strict_equality = true
+no_implicit_optional = true
+
+# Third-party packages without stubs. Listed individually and never globally:
+# a blanket ignore_missing_imports would also silence real errors in our own code.
+[[tool.mypy.overrides]]
+module = ["structlog.*"]
+ignore_missing_imports = true
+
+# ------------------------------------------------------------------- pytest --
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "unit: no external services required",
+    "integration: requires a live PostgreSQL",
+]
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["src/emeye"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]

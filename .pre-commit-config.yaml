@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Convenience, not enforcement. Hooks are bypassable with --no-verify, so CI is
+# the authority — these exist to catch things before a push, not instead of it.
+#
+#   pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: no-payloads
+        name: no secrets, payloads or oversized files
+        entry: python scripts/check_no_payloads.py
+        language: system
+        pass_filenames: true
+
+      - id: task-parity
+        name: Makefile and make.ps1 expose the same targets
+        entry: python scripts/check_task_parity.py
+        language: system
+        pass_filenames: false
+        files: '^(Makefile|make\.ps1)$'
+
+      - id: no-spotify-tempo
+        name: no tempo or key from Spotify
+        entry: >
+          bash -c 'if git diff --cached -U0 | grep -nE "^\+.*(audio_features|audio-features|audio-analysis)"; then
+          echo "Spotify audio-features is deprecated for new apps and must never be a tempo/key source."; exit 1; fi'
+        language: system
+        pass_filenames: false

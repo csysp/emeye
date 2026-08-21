@@ -63,19 +63,20 @@ ps: ## Show container status
 licenses: .env ## Check dependency license compatibility
 	$(RUN) python scripts/check_licenses.py
 
-# -- Wired in plan 01-03. Failing loudly is deliberate: a no-op 'make test'
-# -- that exits 0 is the most dangerous target a Makefile can contain.
-test: ## Run unit tests (implemented in plan 01-03)
-	@echo "not wired yet — plan 01-03 owns the test harness" >&2
-	@exit 2
+# EMEYE_WAIT_FOR_DB=0 skips the entrypoint's postgres wait: these need the
+# image, not the database, and would otherwise block for the full timeout.
+RUN_NODB := $(COMPOSE) run --rm -e EMEYE_WAIT_FOR_DB=0 app
 
-test-integration: ## Run integration tests (implemented in plan 01-03)
-	@echo "not wired yet — plan 01-03 owns the test harness" >&2
-	@exit 2
+test: .env ## Run unit tests (no services, outbound network blocked)
+	$(RUN_NODB) pytest -m unit
 
-lint: ## Run ruff and mypy (implemented in plan 01-03)
-	@echo "not wired yet — plan 01-03 owns the lint config" >&2
-	@exit 2
+test-integration: .env ## Run integration tests (needs a running postgres)
+	$(RUN) pytest -m integration
+
+lint: .env ## Run ruff and mypy
+	$(RUN_NODB) ruff check .
+	$(RUN_NODB) ruff format --check .
+	$(RUN_NODB) mypy
 
 clean: ## Remove containers and the app image, keep the database volume
 	$(COMPOSE) down --rmi local
