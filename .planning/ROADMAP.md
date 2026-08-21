@@ -43,7 +43,7 @@ operational bits that keep a decade-long dataset alive.
 Plans:
 - [x] 01-01: Python project — uv, Typer CLI skeleton, pydantic-settings config, structured logging
 - [~] 01-02: Container stack — Ubuntu 24.04 base, compose, Makefile, .env.example, Alembic wiring (⚠️ needs a real build on the owner's machine)
-- [ ] 01-03: Quality gates — ruff, mypy, pytest, pre-commit, CI workflow, secret/payload checks
+- [x] 01-03: Quality gates — ruff, mypy, pytest (55 tests), pre-commit, 5-job CI, secret/payload/parity checks
 - [x] 01-04: Licensing & governance — AGPL-3.0-or-later applied; dependency compatibility enforced
 
 ### Phase 2: Ingestion Framework
@@ -182,7 +182,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/4 | Wave 2 built, runtime unverified | 2026-08-20 |
+| 1. Foundation | 4/4 | All plans landed; container runtime pending owner verification | 2026-08-21 |
 | 2. Ingestion Framework | 0/3 | Not started | - |
 | 3. Beatport Connector | 0/4 | Not started | - |
 | 4. Open-Data Enrichment | 0/5 | Not started | - |
