@@ -16,7 +16,25 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+REPO = Path(__file__).resolve().parents[2]
+SCRIPTS = REPO / "scripts"
+
+
+def _read_runner(name: str) -> str:
+    """Read a task runner, failing with the actual cause if it is not mounted.
+
+    Inside the dev container these arrive via compose.override.yaml. A bare
+    FileNotFoundError here reads as a broken test rather than a missing mount,
+    so say which it is.
+    """
+    path = REPO / name
+    if not path.is_file():
+        pytest.fail(
+            f"{name} not found at {path}. Inside the container it is provided by "
+            f"a read-only mount in compose.override.yaml — check that mount rather "
+            f"than this test."
+        )
+    return path.read_text(encoding="utf-8")
 
 
 def _load(name: str) -> ModuleType:
@@ -75,8 +93,8 @@ switch ($Target.ToLower()) {
 
 def test_task_parity_holds_for_the_real_runners() -> None:
     mod = _load("check_task_parity")
-    make_text = (SCRIPTS.parent / "Makefile").read_text(encoding="utf-8")
-    ps_text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
+    make_text = _read_runner("Makefile")
+    ps_text = _read_runner("make.ps1")
     assert mod.makefile_targets(make_text) == mod.powershell_targets(ps_text)
 
 
@@ -93,7 +111,7 @@ def test_powershell_helpers_are_called_with_arrays() -> None:
     """
     import re
 
-    text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
+    text = _read_runner("make.ps1")
     offenders: list[str] = []
     for line in text.splitlines():
         stripped = line.strip()
@@ -110,5 +128,5 @@ def test_powershell_helpers_are_called_with_arrays() -> None:
 
 def test_powershell_does_not_shadow_the_args_automatic_variable() -> None:
     """$Args is an automatic variable; a param named $Args is a latent bug."""
-    text = (SCRIPTS.parent / "make.ps1").read_text(encoding="utf-8")
+    text = _read_runner("make.ps1")
     assert "[string[]]$Args" not in text

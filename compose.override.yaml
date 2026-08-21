@@ -25,4 +25,10 @@ services:
       - ./scripts:/app/scripts:ro
       - ./alembic.ini:/app/alembic.ini:ro
       - ./pyproject.toml:/app/pyproject.toml:ro
+      # The task runners are host-side tools and are deliberately absent from
+      # the image (.dockerignore). They are mounted read-only here because
+      # tests assert the two stay at target parity, and a guard that cannot
+      # see what it guards is not a guard.
+      - ./Makefile:/app/Makefile:ro
+      - ./make.ps1:/app/make.ps1:ro
       - emeye-data:/data
