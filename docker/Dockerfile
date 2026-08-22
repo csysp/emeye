@@ -70,6 +70,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ${PYTHON} \
         ca-certificates \
+        cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Ubuntu 24.04 ships a built-in 'ubuntu' account already holding UID 1000, and
@@ -106,16 +107,19 @@ COPY --chown=${APP_UID}:${APP_GID} pyproject.toml /app/pyproject.toml
 # what ships.
 COPY --chown=${APP_UID}:${APP_GID} scripts /app/scripts
 COPY --chown=root:root docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=root:root docker/scheduler-entrypoint.sh /usr/local/bin/scheduler-entrypoint.sh
+COPY --chown=${APP_UID}:${APP_GID} docker/crontab /app/docker/crontab
 # Strip CR before chmod. .gitattributes keeps this file LF on a fresh checkout,
 # but it only applies at checkout time — a clone made before that file existed
 # keeps its CRLF copy through every subsequent pull. A CRLF shebang fails as
 # "/usr/bin/env: 'bash\r': No such file or directory", which reads as a missing
 # interpreter rather than a line-ending problem. Normalizing here means the
 # image is correct regardless of the state of the host's working tree.
-RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
-    && chmod 0755 /usr/local/bin/entrypoint.sh \
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh /usr/local/bin/scheduler-entrypoint.sh \
+    && chmod 0755 /usr/local/bin/entrypoint.sh /usr/local/bin/scheduler-entrypoint.sh \
     && head -c 2 /usr/local/bin/entrypoint.sh | grep -q '#!' \
-    && bash -n /usr/local/bin/entrypoint.sh
+    && bash -n /usr/local/bin/entrypoint.sh \
+    && bash -n /usr/local/bin/scheduler-entrypoint.sh
 
 # A fresh named volume inherits ownership from the image's directory, so
 # chowning here is what makes /data writable to a non-root container user.

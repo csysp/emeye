@@ -147,3 +147,20 @@ def test_no_http_client_outside_the_http_package() -> None:
         and "httpx." in path.read_text(encoding="utf-8")
     ]
     assert not offenders, f"httpx used outside emeye/http: {offenders}"
+
+
+def test_payload_guard_does_not_flag_source_named_like_a_data_dir() -> None:
+    """Regression: src/emeye/bronze/ is the code that writes bronze, not data.
+
+    The rule originally matched the segment anywhere in the path, so adding the
+    bronze package tripped the guard on its own source files.
+    """
+    mod = _load("check_no_payloads")
+    assert mod.check(["src/emeye/bronze/store.py"]) == []
+    assert mod.check(["tests/unit/test_bronze_store.py"]) == []
+
+
+def test_payload_guard_still_flags_real_data_directories() -> None:
+    mod = _load("check_no_payloads")
+    for path in ("data/beatport/top100.json", "exports/tracks.csv", "bronze/raw.json"):
+        assert mod.check([path]), f"{path} should be rejected"

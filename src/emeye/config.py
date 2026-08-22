@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     enable_lastfm: bool = False
     enable_listenbrainz: bool = False
     enable_spotify: bool = False
+    # Not a real upstream: a fixture source used to exercise the ingest
+    # substrate without touching anyone's servers. Off by default like the rest.
+    enable_demo: bool = False
 
     # -- Source credentials -----------------------------------------------
     discogs_token: SecretStr | None = None

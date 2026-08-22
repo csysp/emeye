@@ -1,0 +1,15 @@
+# emeye scheduled collection.
+#
+# cron's environment is famously empty, so EMEYE_* is exported by the
+# entrypoint before crond starts, and output goes to /proc/1/fd/1 so
+# `docker compose logs scheduler` shows it — rather than cron's mail spool,
+# where nobody will ever look.
+#
+# Times are UTC. Add jobs one per line as phases deliver them.
+#
+# Phase 3 adds the real entries, e.g. shortly after the Beatport chart reset:
+#   15 2 * * *  emeye ingest run beatport.top100 > /proc/1/fd/1 2>&1
+#   25 2 * * *  emeye ingest run beatport.hype100 > /proc/1/fd/1 2>&1
+#
+# Nothing is scheduled yet: phase 2 ships the mechanism, phase 3 the jobs.
+

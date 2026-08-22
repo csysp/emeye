@@ -12,6 +12,8 @@ from __future__ import annotations
 import typer
 
 from emeye import __version__
+from emeye.cli import ingest as ingest_cli
+from emeye.cli import status as status_cli
 from emeye.cli.groups import register_all
 from emeye.config import get_settings
 from emeye.logging import configure_logging
@@ -24,6 +26,10 @@ app = typer.Typer(
 )
 
 register_all(app)
+
+# Implemented groups replace their stubs (phase 2).
+app.add_typer(ingest_cli.app, name="ingest")
+app.add_typer(status_cli.app, name="status")
 
 LICENSE_NOTICE = (
     "emeye  Copyright (C) 2026  emeye contributors\n"

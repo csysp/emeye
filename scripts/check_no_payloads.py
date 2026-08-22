@@ -37,8 +37,14 @@ FORBIDDEN_SUFFIXES = {
 
 FORBIDDEN_NAME_PARTS = (".sql.gz", ".sql.bz2", ".tar.gz.enc")
 
-# Directories whose contents are collected data, never source.
+# Top-level directories whose contents are collected data, never source.
+#
+# Matched as path prefixes only. Matching the segment anywhere would flag
+# src/emeye/bronze/ — which is the code that writes bronze, not bronze data.
 FORBIDDEN_DIRS = ("data/", "exports/", "pgdata/", "bronze/")
+
+# Source trees are never collected data, whatever they are named.
+SOURCE_PREFIXES = ("src/", "tests/", "scripts/", "docker/", "dbt/", "app/")
 
 # Large files that are legitimately part of the repo.
 SIZE_ALLOWLIST = {"uv.lock", "LICENSE"}
@@ -83,7 +89,7 @@ def check(paths: list[str]) -> list[str]:
             problems.append(f"{posix}: database dump")
             continue
 
-        if any(posix.startswith(d) or f"/{d}" in posix for d in FORBIDDEN_DIRS):
+        if not posix.startswith(SOURCE_PREFIXES) and posix.startswith(FORBIDDEN_DIRS):
             problems.append(f"{posix}: lives in a collected-data directory")
             continue
 

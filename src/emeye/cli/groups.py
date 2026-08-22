@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import typer
 
-# Group name -> (help text, roadmap phase that implements it)
+# Group name -> (help text, roadmap phase that implements it).
+# Groups listed here are still stubs; IMPLEMENTED names are wired to real apps
+# in main.py and must not appear in this table.
 GROUPS: dict[str, tuple[str, int]] = {
-    "ingest": ("Collect from upstream sources into bronze", 3),
     "enrich": ("Cross-reference and resolve entities across sources", 4),
     "dbt": ("Build and test the silver/gold transformation models", 6),
     "forecast": ("Fit, backtest and score trend forecasts", 7),
     "export": ("Dump marts to Parquet/CSV for DuckDB and notebooks", 8),
-    "status": ("Report ingest health, coverage and backup age", 2),
     "backup": ("Write a portable warehouse dump for manual offline copy", 8),
 }
 

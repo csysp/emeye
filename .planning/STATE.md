@@ -21,8 +21,8 @@ See: .planning/PROJECT.md (updated 2026-08-20)
 ## Current Position
 
 Phase: 2 of 8 (Ingestion Framework)
-Plan: 0 of 3 in current phase — planned, awaiting review
-Status: Phase 2 planned. Awaiting owner review before execution.
+Plan: 3 of 3 written — awaiting container/CI verification
+Status: Phase 2 code complete on the host. Container + CI verification pending.
 Last activity: 2026-08-20 — Phase 1 planned; owner decisions recorded (license, Beatport posture, Spotify role, chart scope). `01-CONTEXT.md` captures 21 locked implementation decisions; four executable plans written across three waves. Licensing added to Phase 1 as plan 01-04 with a blocking decision checkpoint.
 
 **Execution waves for Phase 2:**
@@ -141,8 +141,19 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-08-20 — Phase 1 planning complete.
-Next step: owner reviews the three Phase 2 plans, then execute wave 1
-(`02-01` and `02-02` in parallel).
+Next step: verify Phase 2 on the owner's machine —
+
+```powershell
+git pull
+.\make.ps1 migrate        # applies 0002 (bronze + append-only trigger)
+.\make.ps1 test           # 94 unit tests
+.\make.ps1 test-integration   # 23 integration tests, first real run
+.\make.ps1 lint
+```
+
+The integration suite has never run against a live database here (sandbox has
+no Postgres), so the bronze trigger, runner bookkeeping, idempotency and
+offline-reparse tests are all first-execution.
 
 **Wave 3 landed.** `check_licenses`, `check_no_payloads` and `check_task_parity`
 are all wired into CI. `make test` / `test-integration` / `lint` have real

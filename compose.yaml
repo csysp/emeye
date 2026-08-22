@@ -66,6 +66,16 @@ services:
     command: ["sleep", "infinity"]
     restart: unless-stopped
 
+  # Opt-in: `make up` on a workstation must not silently begin collecting.
+  # Deployment enables it deliberately:
+  #   docker compose -f compose.yaml --profile scheduler up -d
+  scheduler:
+    <<: *app-base
+    profiles: ["scheduler"]
+    entrypoint: ["/usr/local/bin/scheduler-entrypoint.sh"]
+    command: []
+    restart: unless-stopped
+
 volumes:
   emeye-pgdata:
   emeye-data:

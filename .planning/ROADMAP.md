@@ -59,9 +59,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Bronze schema (`raw_document`, `ingest_run`) + migrations + replay/reparse command
-- [ ] 02-02: HTTP layer — rate limiter, robots.txt, retry/backoff, honest UA, cache-by-hash, opt-in source gating
-- [ ] 02-03: Job runner — idempotent job contract, run tracking, `emeye status`, scheduler container
+- [x] 02-01: Bronze schema + migrations + append-only trigger + store module
+- [x] 02-02: HTTP layer — rate limiter, fail-closed robots.txt, retry/backoff, honest UA, opt-in gating
+- [x] 02-03: Job runner — job contract, run tracking, `emeye status`, reparse, opt-in scheduler
 
 ### Phase 3: Beatport Connector
 **Goal**: The irreplaceable data starts accumulating — Top 100 and Hype 100 snapshots on every chart reset, plus catalog metadata for the tracks that appear on them.
@@ -183,7 +183,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | ✅ Complete — verified on Windows and CI-green | 2026-08-21 |
-| 2. Ingestion Framework | 0/3 | Planned | 2026-08-21 |
+| 2. Ingestion Framework | 3/3 | Code complete — needs container verification | 2026-08-22 |
 | 3. Beatport Connector | 0/4 | Not started | - |
 | 4. Open-Data Enrichment | 0/5 | Not started | - |
 | 5. Domain Normalization | 0/4 | Not started | - |
