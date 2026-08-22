@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     default_rate_limit_per_sec: float = 1.0
     http_timeout_seconds: float = 30.0
     max_retries: int = 5
+    # Jitter added to every inter-request delay. A perfectly periodic request
+    # pattern is both more detectable and less considerate than an irregular one.
+    rate_limit_jitter_seconds: float = 0.3
+    robots_cache_ttl_seconds: int = 86400
+    # Per-host overrides, e.g. {"musicbrainz.org": 1.0}. MusicBrainz documents
+    # 1 req/s; where a source states a limit, honour the stated one.
+    per_host_rate_limits: dict[str, float] = Field(default_factory=dict)
 
     # -- Paths ------------------------------------------------------------
     data_dir: Path = Path("/data")

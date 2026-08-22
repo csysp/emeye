@@ -130,3 +130,20 @@ def test_powershell_does_not_shadow_the_args_automatic_variable() -> None:
     """$Args is an automatic variable; a param named $Args is a latent bug."""
     text = _read_runner("make.ps1")
     assert "[string[]]$Args" not in text
+
+
+def test_no_http_client_outside_the_http_package() -> None:
+    """All outbound HTTP must go through PoliteClient.
+
+    A connector that builds its own httpx client silently opts out of rate
+    limiting, robots.txt and the enable_ gate — which is the whole point of
+    having a shared client (REQ-18).
+    """
+    src = REPO / "src" / "emeye"
+    offenders = [
+        str(path.relative_to(REPO))
+        for path in src.rglob("*.py")
+        if "http" not in path.parts[path.parts.index("emeye") :]
+        and "httpx." in path.read_text(encoding="utf-8")
+    ]
+    assert not offenders, f"httpx used outside emeye/http: {offenders}"
